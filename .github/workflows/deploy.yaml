@@ -44,7 +44,7 @@ jobs:
         run: |
           touch .env
           echo PORT=8081 >> .env
-          ech DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env
+          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env
           cat .env
       # Initialize Node.js
       - name: Install Node.js ${{ matrix.node-version }}
