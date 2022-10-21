@@ -76,12 +76,12 @@ jobs:
       # Make ZIP file with source code
       # -x 는 zip 파일 해당 부분 제외
       - name: Generate deployment package
-        run: zip -r deploy.zip . -x '*.git*' './src/*' './aws/*' awscliv2.zip
+        run: zip -r deploy.zip . -x '*.git*' './src/*' './node_modules/*' './aws/*' awscliv2.zip
 
       # Deploy to Elastic Beanstalk
       # application_name과 environment_name을 꼭 확인하자! 둘이 같아야함
       - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v14
+        uses: einaregilsson/beanstalk-deploy@v18
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
