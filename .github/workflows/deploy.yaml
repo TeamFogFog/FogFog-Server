@@ -1,0 +1,97 @@
+name: Deploy to EB
+
+#develop branch에 push 되면 실행
+on: 
+  push:
+    branches:
+      - develop
+
+jobs:
+  buildAndTest:
+    name: CI Pipeline
+    runs-on: ubuntu-18.04
+    strategy:
+    # Node version
+      matrix:
+        node-version: ['16.x']
+    
+    steps:
+      - uses: actions/checkout@v2
+      
+      # Initialize Node.js
+      - name: Install Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          
+      # Install project dependencies, test and build
+      - name: Install dependencies
+        run: yarn
+      - name: Run build
+        run: yarn build
+        
+  deploy: 
+    name: CD Pipline
+    runs-on: ubuntu-18.04
+    
+    strategy:
+      matrix:
+        node-version: ['16.x']
+    needs: buildAndTest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create env
+        run: |
+          touch .env
+          echo PORT=8081 >> .env
+          ech DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env
+          cat .env
+      # Initialize Node.js
+      - name: Install Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      # Install project dependencies and build
+      - name: Install dependencies
+        run: yarn
+      - name: Run build
+        run: yarn build
+       
+      # Install AWS CLI 2
+      - name: Install AWS CLI 2
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          which aws
+          sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      # Make ZIP file with source code
+      # -x 는 zip 파일 해당 부분 제외
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*' './src/*' './aws/*' awscliv2.zip
+
+      # Deploy to Elastic Beanstalk
+      # application_name과 environment_name을 꼭 확인하자! 둘이 같아야함
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v14
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: FogFog-dev
+          environment_name: Fogfogdev-env-1
+          region: ${{ secrets.AWS_REGION }}
+          version_label: ${{github.SHA}}
+          deployment_package: deploy.zip
+    
+        
+        
+        
+      
