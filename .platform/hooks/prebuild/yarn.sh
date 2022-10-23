@@ -11,4 +11,4 @@ yum -y install yarn;
 app="$(/opt/elasticbeanstalk/bin/get-config container -k app_staging_dir)";
 cd "${app}";
 echo "Inside ${app}, about to run yarn."
-yarn --production;
+yarn install;
