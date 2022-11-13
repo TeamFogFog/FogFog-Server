@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   id           Int      @id @default(autoincrement())
-  nickname     String   @db.VarChar()
+  nickname     String?  @db.VarChar()
   preferredMap Int?     @map("preferred_map") @db.SmallInt
   socialType   Int      @map("social_type") @db.SmallInt
   refreshToken String?  @map("refresh_token") @db.VarChar()
