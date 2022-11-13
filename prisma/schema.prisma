@@ -29,7 +29,7 @@ model Map {
   image     String?  @db.VarChar()
   areaType  Int?     @map("area_type") @db.SmallInt
   areaName  Int      @map("area_name") @db.SmallInt
-  createdAt DateTime @map("created_at")
-  updatedAt DateTime @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
   isDeleted Boolean  @default(false) @map("is_deleted")
 }
