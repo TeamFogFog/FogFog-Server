@@ -11,9 +11,25 @@ datasource db {
 }
 
 model User {
-  id    Int     @default(autoincrement()) @id
-  email String  @unique
-  name  String?
-  refreshToken String
-  loginType String
+  id           Int      @id @default(autoincrement())
+  nickname     String   @db.VarChar()
+  preferredMap Int?     @map("preferred_map") @db.SmallInt
+  socialType   Int      @map("social_type") @db.SmallInt
+  refreshToken String?  @map("refresh_token") @db.VarChar()
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+  isDeleted    Boolean  @default(false) @map("is_deleted")
+}
+
+model Map {
+  id        Int      @id @default(autoincrement())
+  latitude  Float
+  longitude Float
+  address   String   @db.VarChar()
+  image     String?  @db.VarChar()
+  areaType  Int?     @map("area_type") @db.SmallInt
+  areaName  Int      @map("area_name") @db.SmallInt
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+  isDeleted Boolean  @default(false) @map("is_deleted")
 }
