@@ -1,7 +1,7 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 
-@Catch() 
+@Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -13,12 +13,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = (exception as HttpException).getStatus();
     }
 
-    response
-      .status(status)
-      .json({
-        statusCode: status,
-        message: (exception as any).message,
-        success: false,
-      });
+    response.status(status).json({
+      statusCode: status,
+      message: (exception as any).message,
+      success: false,
+    });
   }
 }

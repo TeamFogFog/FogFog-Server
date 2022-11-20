@@ -1,4 +1,4 @@
-import { HttpException } from "@nestjs/common";
+import { HttpException } from '@nestjs/common';
 
 export default class CustomException extends HttpException {
   public statusCode: number = 0;
