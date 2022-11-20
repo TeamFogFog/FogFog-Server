@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Map" ALTER COLUMN "area_name" SET DATA TYPE TEXT;
