@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { CallbackResponseDto } from './dto/response-callback.dto';
 
 @Controller('auth')
-@ApiTags('소셜 로그인 API')
+@ApiTags('Auth')
 @ApiResponse({ type: CallbackResponseDto })
 export class AuthController {
   constructor(private authService: AuthService) {}
