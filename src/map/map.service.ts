@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ReadMapDto } from './read-map.dto';
+import { HttpService } from '@nestjs/axios';
+import CustomException from 'src/exceptions/custom.exception';
+import { firstValueFrom } from 'rxjs';
 
-// TODO: - dto 폴더링 어케, response 어케, 사이드바 api
 @Injectable()
 export class MapService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly http: HttpService,
+  ) {}
 
   async getMapById(
     mapId: number,
@@ -15,18 +20,22 @@ export class MapService {
     try {
       const map = await this.prisma.map.findUnique({
         where: {
-          id: mapId,
+          id: +mapId,
         },
       });
 
       const destinationLatitude = map.latitude;
       const destinationLongitude = map.longitude;
 
+      const osrmRouteUrl = `http://router.project-osrm.org/route/v1/driving/${lang},${lat};${destinationLongitude},${destinationLatitude}`;
+      const osrmResponse = await firstValueFrom(this.http.get(osrmRouteUrl));
+      const distance = `${osrmResponse.data.routes[0].distance}m`;
+
       const data: ReadMapDto = {
         name: map.areaName,
         address: map.address,
         image: map.image,
-        distance: '222m',
+        distance: distance,
       };
 
       return data;
