@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ReadMapDto } from './read-map.dto';
 import { HttpService } from '@nestjs/axios';
@@ -12,6 +12,8 @@ export class MapService {
     private readonly http: HttpService,
   ) {}
 
+  private readonly logger = new Logger(MapService.name);
+
   async getMapById(
     mapId: number,
     lat: number,
@@ -23,6 +25,10 @@ export class MapService {
           id: +mapId,
         },
       });
+
+      if (!map) {
+        throw new CustomException(HttpStatus.NOT_FOUND, 'Not Found - Map');
+      }
 
       const destinationLatitude = map.latitude;
       const destinationLongitude = map.longitude;
@@ -40,8 +46,11 @@ export class MapService {
 
       return data;
     } catch (error) {
-      console.log(error);
-      throw error;
+      this.logger.error({ error });
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Internal Server Error',
+      );
     }
   }
 }
