@@ -7,6 +7,8 @@ import { SignInDto } from './dto/signin.dto';
 import CustomException from 'src/exceptions/custom.exception';
 
 import { PrismaService } from 'src/prisma.service';
+import { SOCIAL_TYPE } from 'src/common/constants/social-type';
+import { convertObjectKey } from 'src/utils/convertObjectKey';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +41,14 @@ export class AuthService {
         'Internal Server Error',
       );
     }
+  }
+
+  async getUserByKaKaoId(kakaoId: number) {
+    return await this.prisma.user.findMany({
+      where: {
+        kakaoId,
+      },
+    });
   }
 
   async createKakaoUser(signInDto: SignInDto) {
@@ -76,13 +86,20 @@ export class AuthService {
       const { kakaoAccount } = userResponse.data.kakao_account;
 
       // 디비에서 유저 회원번호가 존재하는 지 찾아본다
-      const user = this.prisma.user.findMany({
-        where: {
-          kakaoId,
-        },
-      });
+      const user = await this.getUserByKaKaoId(kakaoId);
 
-      if (!user) {
+      if (!user.length) {
+        let convertSocialType: number = convertObjectKey(
+          SOCIAL_TYPE,
+          socialType,
+        );
+
+        const newUser = await this.prisma.user.create({
+          data: {
+            socialType: convertSocialType,
+            kakaoId,
+          },
+        });
       }
       // if 존재 하면 유저 jwt 토큰 발급
 
