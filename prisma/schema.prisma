@@ -20,6 +20,8 @@ model User {
   preferredMap Int?     @map("preferred_map") @db.SmallInt
   socialType   Int      @map("social_type") @db.SmallInt
   refreshToken String?  @map("refresh_token") @db.VarChar()
+  kakaoId      BigInt?  @map("kakao_id") @db.BigInt()
+  appleId      String?  @map("apple_id") @db.VarChar()
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @map("updated_at")
   isDeleted    Boolean  @default(false) @map("is_deleted")

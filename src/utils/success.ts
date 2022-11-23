@@ -1,7 +1,9 @@
+import { ResponseDataType } from 'src/common/types/response-data.type';
+
 export const wrapSuccess = (
   statusCode: number,
   message: string,
-  data: unknown,
+  data: ResponseDataType,
 ) => {
   return {
     success: true,
