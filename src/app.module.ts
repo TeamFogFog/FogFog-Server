@@ -12,6 +12,7 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
+import { PrismaService } from './prisma.service';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import configuration from './config/configuration';
       useClass: WebhookInterceptor,
     },
     AuthService,
+    PrismaService,
   ],
 })
 export class AppModule {}

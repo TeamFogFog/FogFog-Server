@@ -6,9 +6,12 @@ import { CallbackResponse } from './dto/response-callback.dto';
 import { SignInDto } from './dto/signin.dto';
 import CustomException from 'src/exceptions/custom.exception';
 
+import { PrismaService } from 'src/prisma.service';
+
 @Injectable()
 export class AuthService {
   constructor(
+    private prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly http: HttpService,
   ) {}
@@ -68,6 +71,22 @@ export class AuthService {
         );
       }
       this.logger.debug(userResponse.data);
+
+      const kakaoId: number = userResponse.data.id;
+      const { kakaoAccount } = userResponse.data.kakao_account;
+
+      // 디비에서 유저 회원번호가 존재하는 지 찾아본다
+      const user = this.prisma.user.findMany({
+        where: {
+          kakaoId,
+        },
+      });
+
+      if (!user) {
+      }
+      // if 존재 하면 유저 jwt 토큰 발급
+
+      // 존재 하지 않으면 유저 생성 후 jwt 토큰 발급
     } catch (error) {
       this.logger.error(error);
       throw new CustomException(
