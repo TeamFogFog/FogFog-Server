@@ -19,6 +19,9 @@ export class MapService {
         },
       });
 
+      const destinationLatitude = map.latitude;
+      const destinationLongitude = map.longitude;
+
       const data: ReadMapDto = {
         name: map.areaName,
         address: map.address,
