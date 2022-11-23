@@ -1,11 +1,13 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { wrapSuccess } from 'src/utils/success';
 import { AuthService } from './auth.service';
-import { CallbackResponseDto } from './dto/response-callback.dto';
+import { ResponseCallbackDto } from './dto/response-callback.dto';
+import { SignInDto } from './dto/signin.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
-@ApiResponse({ type: CallbackResponseDto })
+@ApiResponse({ type: ResponseCallbackDto })
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -16,7 +18,23 @@ export class AuthController {
   })
   async kakaoLoginCallback(
     @Query('code') code: string,
-  ): Promise<CallbackResponseDto> {
-    return this.authService.getKakaoAccessToken(code);
+  ): Promise<ResponseCallbackDto> {
+    const data = await this.authService.getKakaoAccessToken(code);
+
+    return wrapSuccess(HttpStatus.OK, 'access token 발급 성공', data);
+  }
+
+  @Post('/signin')
+  @ApiOperation({
+    summary: '소셜 로그인 API',
+  })
+  async signin(@Body() signInDto: SignInDto) {
+    const { socialType } = signInDto;
+
+    switch (socialType) {
+      case 'kakao':
+        await this.authService.createKakaoUser(signInDto);
+        break;
+    }
   }
 }
