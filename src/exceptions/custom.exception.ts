@@ -2,20 +2,13 @@ import { HttpException } from '@nestjs/common';
 
 export default class CustomException extends HttpException {
   public statusCode: number = 0;
-  public success: boolean = false;
   public message: string = '';
-  public data: unknown;
+  public success: boolean = false;
 
-  constructor(
-    status: number,
-    success: boolean,
-    message: string,
-    data?: unknown,
-  ) {
+  constructor(status: number, message: string, success?: boolean) {
     super(message, status);
     this.statusCode = status;
-    this.success = success;
     this.message = message;
-    this.data = data;
+    this.success = success;
   }
 }
