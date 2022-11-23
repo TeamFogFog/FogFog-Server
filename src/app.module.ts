@@ -15,17 +15,18 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
+import { PrismaService } from './prisma.service';
 
 @Module({
   imports: [
     AuthModule,
+    MapModule,
     HttpModule,
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
       load: [configuration],
     }),
-    MapModule,
   ],
   controllers: [AppController, AuthController, MapController],
   providers: [
@@ -40,6 +41,7 @@ import configuration from './config/configuration';
     },
     AuthService,
     MapService,
+    PrismaService,
   ],
 })
 export class AppModule {}
