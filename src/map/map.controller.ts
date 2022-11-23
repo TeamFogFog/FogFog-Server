@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { MapService } from './map.service';
-import { ReadMapDto } from './read-map.dto';
+import { EachRecipeResponseDto, ReadMapDto } from './read-map.dto';
 
 @Controller('map')
 export class MapController {
@@ -17,7 +17,7 @@ export class MapController {
     @Param('id') id: number,
     @Query('lat') lat: number,
     @Query('lang') lang: number,
-  ): Promise<ReadMapDto> {
-    return this.mapService.getMapById(id, lat, lang);
+  ): Promise<EachRecipeResponseDto> {
+    const data: ReadMapDto = this.mapService.getMapById(id, lat, lang);
   }
 }
