@@ -1,24 +1,56 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
+import { UsersService } from 'src/users/users.service';
 import { CallbackResponse } from './dto/response-callback.dto';
 import { SignInDto } from './dto/signin.dto';
 import CustomException from 'src/exceptions/custom.exception';
-
-import { PrismaService } from 'src/prisma.service';
 import { SOCIAL_TYPE } from 'src/common/constants/social-type';
 import { convertObjectKey } from 'src/utils/convertObjectKey';
+import { JwtPayload } from 'src/common/interfaces/jwtPayload';
+import { JwtToken } from 'src/common/interfaces/JwtToken';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
+    private jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly http: HttpService,
+    private readonly usersService: UsersService,
   ) {}
 
   private readonly logger = new Logger(AuthService.name);
+
+  async getJwtToken(user: User): Promise<JwtToken> {
+    const uniqueId: string =
+      SOCIAL_TYPE[user.socialType] === 'kakao'
+        ? user.kakaoId.toString()
+        : user.appleId;
+
+    const payload: JwtPayload = {
+      id: user.id,
+      socialType: user.socialType,
+      uniqueId,
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.config.get<string>('accessTokenSecret'),
+        expiresIn: '10d',
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.config.get<string>('refreshTokenSecret'),
+        expiresIn: '30d',
+      }),
+    ]);
+
+    return { accessToken, refreshToken };
+  }
 
   async getKakaoAccessToken(code: string): Promise<CallbackResponse> {
     const kakaoRequestTokenUrl = `https://kauth.kakao.com/oauth/token
@@ -41,14 +73,6 @@ export class AuthService {
         'Internal Server Error',
       );
     }
-  }
-
-  async getUserByKaKaoId(kakaoId: number) {
-    return await this.prisma.user.findMany({
-      where: {
-        kakaoId,
-      },
-    });
   }
 
   async createKakaoUser(signInDto: SignInDto) {
@@ -85,10 +109,9 @@ export class AuthService {
       const kakaoId: number = userResponse.data.id;
       const { kakaoAccount } = userResponse.data.kakao_account;
 
-      // 디비에서 유저 회원번호가 존재하는 지 찾아본다
-      const user = await this.getUserByKaKaoId(kakaoId);
+      let user = await this.usersService.getUserByKaKaoId(kakaoId);
 
-      if (!user.length) {
+      if (!user) {
         let convertSocialType: number = convertObjectKey(
           SOCIAL_TYPE,
           socialType,
@@ -100,10 +123,11 @@ export class AuthService {
             kakaoId,
           },
         });
-      }
-      // if 존재 하면 유저 jwt 토큰 발급
 
-      // 존재 하지 않으면 유저 생성 후 jwt 토큰 발급
+        user = newUser[0];
+      }
+
+      const { accessToken, refreshToken } = await this.getJwtToken(user);
     } catch (error) {
       this.logger.error(error);
       throw new CustomException(
