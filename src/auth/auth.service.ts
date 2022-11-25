@@ -11,8 +11,8 @@ import { SignInDto } from './dto/signin.dto';
 import CustomException from 'src/exceptions/custom.exception';
 import { SOCIAL_TYPE, GENDER_TYPE } from 'src/common/objects';
 import { convertObjectKey } from 'src/utils/convertObjectKey';
-import { JwtPayload } from 'src/common/interfaces/jwtPayload';
-import { JwtToken } from 'src/common/interfaces/JwtToken';
+import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
+import { JwtToken } from 'src/common/interfaces/jwt-token.interface';
 import { ResponseSignIn } from './dto/response-signin.dto';
 
 @Injectable()
