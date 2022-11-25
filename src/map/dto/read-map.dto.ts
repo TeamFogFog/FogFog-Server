@@ -1,6 +1,8 @@
-import { ResponseSuccessDto } from '../common/dto/response-success.dto';
+import { ResponseSuccessDto } from '../../common/dto/response-success.dto';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class ReadMapDto {
+  @ApiProperty()
   name: string;
   address: string;
   image: string;
@@ -8,5 +10,6 @@ export class ReadMapDto {
 }
 
 export class EachRecipeResponseDto extends ResponseSuccessDto {
+  @ApiProperty()
   data: ReadMapDto;
 }

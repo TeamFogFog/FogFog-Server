@@ -3,7 +3,7 @@ import { ResponseDataType } from 'src/common/types/response-data.type';
 export const wrapSuccess = (
   statusCode: number,
   message: string,
-  data: ResponseDataType,
+  data: any,
 ) => {
   return {
     success: true,

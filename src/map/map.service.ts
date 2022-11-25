@@ -1,15 +1,17 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { ReadMapDto } from './read-map.dto';
+import { ReadMapDto } from './dto/read-map.dto';
 import { HttpService } from '@nestjs/axios';
 import CustomException from 'src/exceptions/custom.exception';
 import { firstValueFrom } from 'rxjs';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MapService {
   constructor(
     private prisma: PrismaService,
     private readonly http: HttpService,
+    private readonly config: ConfigService,
   ) {}
 
   private readonly logger = new Logger(MapService.name);
@@ -30,6 +32,8 @@ export class MapService {
         throw new CustomException(HttpStatus.NOT_FOUND, 'Not Found - Map');
       }
 
+      const defaultImage = this.config.get('DEFAULT_IMAGE');
+
       const destinationLatitude = map.latitude;
       const destinationLongitude = map.longitude;
 
@@ -40,7 +44,7 @@ export class MapService {
       const data: ReadMapDto = {
         name: map.areaName,
         address: map.address,
-        image: map.image,
+        image: map.image ?? defaultImage,
         distance: distance,
       };
 
