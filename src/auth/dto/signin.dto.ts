@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class SignInDto {
@@ -7,9 +7,9 @@ export class SignInDto {
   @IsNotEmpty()
   socialType: string;
 
-  @ApiProperty({ description: 'kakao access token' })
+  @ApiPropertyOptional({ description: 'kakao access token' })
   kakaoAccessToken?: string;
 
-  @ApiProperty({ description: 'apple id token' })
+  @ApiPropertyOptional({ description: 'apple id token' })
   idToken?: string;
 }
