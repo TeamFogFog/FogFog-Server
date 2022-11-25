@@ -12,6 +12,9 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
+import { PrismaService } from './prisma.service';
+import { UsersModule } from './users/users.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -22,6 +25,7 @@ import configuration from './config/configuration';
       isGlobal: true,
       load: [configuration],
     }),
+    UsersModule,
   ],
   controllers: [AppController, AuthController],
   providers: [
@@ -35,6 +39,8 @@ import configuration from './config/configuration';
       useClass: WebhookInterceptor,
     },
     AuthService,
+    PrismaService,
+    JwtService,
   ],
 })
 export class AppModule {}
