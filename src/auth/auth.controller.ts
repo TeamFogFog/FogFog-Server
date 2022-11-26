@@ -24,7 +24,7 @@ import { wrapSuccess } from 'src/utils/success';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
 import { ResponseSignIn, ResponseSignInDto } from './dto/response-signin.dto';
-import { ResponseTokenDto } from './dto/response-token.dto';
+import { ResponseTokenData, ResponseTokenDto } from './dto/response-token.dto';
 import { SignInDto } from './dto/signin.dto';
 import { RefreshTokenGuard } from './guards';
 
@@ -86,7 +86,10 @@ export class AuthController {
   async updateToken(@Req() req): Promise<ResponseTokenDto> {
     const { id, refreshToken } = req.user;
 
-    const data = await this.authService.updateToken(id, refreshToken);
+    const data: ResponseTokenData = await this.authService.updateToken(
+      id,
+      refreshToken,
+    );
 
     return wrapSuccess(HttpStatus.OK, '토큰 재발급 성공', data);
   }
