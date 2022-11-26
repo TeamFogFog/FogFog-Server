@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { AxiosError } from 'axios';
 import { UsersService } from 'src/users/users.service';
 import { ResponseCallback } from './dto/response-callback.dto';
 import { SignInDto } from './dto/signin.dto';
@@ -14,11 +15,12 @@ import { convertObjectKey } from 'src/utils/convertObjectKey';
 import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { JwtToken } from 'src/common/interfaces/jwt-token.interface';
 import { ResponseSignIn } from './dto/response-signin.dto';
+import { ResponseTokenData } from './dto/response-token.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly http: HttpService,
     private readonly usersService: UsersService,
@@ -54,6 +56,44 @@ export class AuthService {
 
   async getHashedRefreshToken(refreshToken: string): Promise<string> {
     return await argon2.hash(refreshToken);
+  }
+
+  async updateToken(
+    id: number,
+    hashedRefreshToken: string,
+  ): Promise<ResponseTokenData> {
+    try {
+      const user = await this.usersService.getUserById(id);
+      if (!user || !user.refreshToken) {
+        throw new CustomException(HttpStatus.FORBIDDEN, 'Access Denied');
+      }
+
+      const isRefreshTokenMatch: boolean = await argon2.verify(
+        user.refreshToken,
+        hashedRefreshToken,
+      );
+      if (!isRefreshTokenMatch) {
+        throw new CustomException(HttpStatus.FORBIDDEN, 'Access Denied');
+      }
+
+      const newTokens = await this.getJwtToken(user);
+      const newHashedRefreshToken = await this.getHashedRefreshToken(
+        newTokens.refreshToken,
+      );
+
+      await this.usersService.updateRefreshTokenByUserId(
+        user.id,
+        newHashedRefreshToken,
+      );
+
+      return newTokens;
+    } catch (error) {
+      this.logger.error({ error });
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Internal Server Error',
+      );
+    }
   }
 
   async getKakaoAccessToken(code: string): Promise<ResponseCallback> {
@@ -157,7 +197,13 @@ export class AuthService {
         id: user.id,
       };
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error({ error });
+      if (error instanceof AxiosError) {
+        throw new CustomException(
+          error.response.status,
+          error.response.data.msg,
+        );
+      }
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Internal Server Error',
