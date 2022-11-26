@@ -1,15 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ResponseSuccessDto } from 'src/common/dto/response-success.dto';
+import { ResponseTokenData } from './response-token.dto';
 
-export class ResponseSignIn {
+export class ResponseSignIn extends ResponseTokenData {
   @ApiProperty({ description: 'id' })
   id: number;
-
-  @ApiProperty({ description: 'access token' })
-  accessToken: string;
-
-  @ApiProperty({ description: 'refresh token' })
-  refreshToken: string;
 }
 
 export class ResponseSignInDto extends ResponseSuccessDto {
