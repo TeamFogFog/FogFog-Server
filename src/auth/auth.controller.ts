@@ -23,7 +23,10 @@ import { ResponseErrorDto } from 'src/common/dto/response-error.dto';
 import { wrapSuccess } from 'src/utils/success';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
-import { ResponseSignIn, ResponseSignInDto } from './dto/response-signin.dto';
+import {
+  ResponseSignInData,
+  ResponseSignInDto,
+} from './dto/response-signin.dto';
 import { ResponseTokenData, ResponseTokenDto } from './dto/response-token.dto';
 import { SignInDto } from './dto/signin.dto';
 import { RefreshTokenGuard } from './guards';
@@ -62,7 +65,7 @@ export class AuthController {
   })
   async signin(@Body() signInDto: SignInDto): Promise<ResponseSignInDto> {
     const { socialType } = signInDto;
-    let data: ResponseSignIn;
+    let data: ResponseSignInData;
 
     switch (socialType) {
       case 'kakao':

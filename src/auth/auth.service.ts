@@ -7,14 +7,14 @@ import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { AxiosError } from 'axios';
 import { UsersService } from 'src/users/users.service';
-import { ResponseCallback } from './dto/response-callback.dto';
+import { ResponseCallbackData } from './dto/response-callback.dto';
 import { SignInDto } from './dto/signin.dto';
 import CustomException from 'src/exceptions/custom.exception';
 import { SOCIAL_TYPE, GENDER_TYPE } from 'src/common/objects';
 import { convertObjectKey } from 'src/utils/convertObjectKey';
 import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { JwtToken } from 'src/common/interfaces/jwt-token.interface';
-import { ResponseSignIn } from './dto/response-signin.dto';
+import { ResponseSignInData } from './dto/response-signin.dto';
 import { ResponseTokenData } from './dto/response-token.dto';
 
 @Injectable()
@@ -96,7 +96,7 @@ export class AuthService {
     }
   }
 
-  async getKakaoAccessToken(code: string): Promise<ResponseCallback> {
+  async getKakaoAccessToken(code: string): Promise<ResponseCallbackData> {
     const kakaoRequestTokenUrl = `https://kauth.kakao.com/oauth/token
 	?grant_type=authorization_code
 	&client_id=${this.config.get('kakaoClientId')}
@@ -119,7 +119,7 @@ export class AuthService {
     }
   }
 
-  async createKakaoUser(signInDto: SignInDto): Promise<ResponseSignIn> {
+  async createKakaoUser(signInDto: SignInDto): Promise<ResponseSignInData> {
     const { kakaoAccessToken, socialType }: SignInDto = signInDto;
 
     if (!kakaoAccessToken) {
