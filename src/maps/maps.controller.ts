@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
-import { MapService } from './map.service';
+import { MapService } from './maps.service';
 import { EachRecipeResponseDto, ReadMapDto } from './dto/read-map.dto';
 import { wrapSuccess } from '../utils/success';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';

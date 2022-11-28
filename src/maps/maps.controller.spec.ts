@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapController } from './map.controller';
-import { MapService } from './map.service';
+import { MapController } from './maps.controller';
+import { MapService } from './maps.service';
 
 describe('MapController', () => {
   let controller: MapController;
