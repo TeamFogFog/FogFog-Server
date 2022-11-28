@@ -39,7 +39,7 @@ export class MapService {
 
       const osrmRouteUrl = `http://router.project-osrm.org/route/v1/driving/${lang},${lat};${destinationLongitude},${destinationLatitude}`;
       const osrmResponse = await firstValueFrom(this.http.get(osrmRouteUrl));
-      const distance = `${osrmResponse.data.routes[0].distance}m`;
+      const distance = `${osrmResponse.data.routes[0].distance}m` ?? '-m';
 
       const data: ReadMapDto = {
         name: map.areaName,
