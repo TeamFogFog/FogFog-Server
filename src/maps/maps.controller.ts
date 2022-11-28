@@ -1,9 +1,12 @@
 import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
 import { MapService } from './maps.service';
-import { EachRecipeResponseDto, ReadMapDto } from './dto/read-map.dto';
+import {
+  ResponseSmokingAreaDto,
+  ReadSmokingAreaDto,
+  UpdateMapParam,
+} from './dto/read-map.dto';
 import { wrapSuccess } from '../utils/success';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ResponseCallbackDto } from 'src/auth/dto/response-callback.dto';
 
 @Controller('maps')
 @ApiTags('maps')
@@ -15,11 +18,16 @@ export class MapController {
     summary: '흡연구역 상세 조회 API',
   })
   async getMapById(
-    @Param('id') id: number,
+    // @Param('id') id: UpdateMapParam,
+    @Param() { id }: UpdateMapParam,
     @Query('lat') lat: number,
     @Query('lang') lang: number,
-  ): Promise<EachRecipeResponseDto> {
-    const data: ReadMapDto = await this.mapService.getMapById(id, lat, lang);
+  ): Promise<ResponseSmokingAreaDto> {
+    const data: ReadSmokingAreaDto = await this.mapService.getMapById(
+      id,
+      lat,
+      lang,
+    );
     return wrapSuccess(HttpStatus.OK, '흡연구역 상세 조회 성공', data);
   }
 }

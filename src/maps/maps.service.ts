@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { ReadMapDto } from './dto/read-map.dto';
+import { ReadSmokingAreaDto } from './dto/read-map.dto';
 import { HttpService } from '@nestjs/axios';
 import CustomException from 'src/exceptions/custom.exception';
 import { firstValueFrom } from 'rxjs';
@@ -20,11 +20,11 @@ export class MapService {
     mapId: number,
     lat: number,
     lang: number,
-  ): Promise<ReadMapDto> {
+  ): Promise<ReadSmokingAreaDto> {
     try {
       const map = await this.prisma.map.findUnique({
         where: {
-          id: +mapId,
+          id: mapId,
         },
       });
 
@@ -41,7 +41,7 @@ export class MapService {
       const osrmResponse = await firstValueFrom(this.http.get(osrmRouteUrl));
       const distance = `${osrmResponse.data.routes[0].distance}m` ?? '-m';
 
-      const data: ReadMapDto = {
+      const data: ReadSmokingAreaDto = {
         name: map.areaName,
         address: map.address,
         image: map.image ?? defaultImage,

@@ -18,3 +18,9 @@ export class ResponseSmokingAreaDto extends ResponseSuccessDto {
   @ApiProperty()
   data: ReadSmokingAreaDto;
 }
+
+export class UpdateMapParam {
+  @IsNumber()
+  @Type(() => Number)
+  readonly id: number;
+}
