@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
 import { MapService } from './maps.service';
 import {
   ResponseSmokingAreaDto,
-  ReadSmokingAreaDto,
+  ResponseSmokingArea,
   UpdateMapParam,
 } from './dto/read-map.dto';
 import { wrapSuccess } from '../utils/success';
@@ -23,7 +23,7 @@ export class MapController {
     @Query('lat') lat: number,
     @Query('lang') lang: number,
   ): Promise<ResponseSmokingAreaDto> {
-    const data: ReadSmokingAreaDto = await this.mapService.getMapById(
+    const data: ResponseSmokingArea = await this.mapService.getMapById(
       id,
       lat,
       lang,
