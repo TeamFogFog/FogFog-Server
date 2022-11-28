@@ -45,7 +45,7 @@ export class MapService {
         name: map.areaName,
         address: map.address,
         image: map.image ?? defaultImage,
-        distance: distance,
+        distance,
       };
 
       return data;
