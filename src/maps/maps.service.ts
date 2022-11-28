@@ -34,8 +34,8 @@ export class MapService {
 
       const defaultImage = this.config.get('DEFAULT_IMAGE');
 
-      const destinationLatitude = map.latitude;
-      const destinationLongitude = map.longitude;
+      const { latitude: destinationLatitude, longitude: destinationLongitude } =
+        map;
 
       const osrmRouteUrl = `http://router.project-osrm.org/route/v1/driving/${lang},${lat};${destinationLongitude},${destinationLatitude}`;
       const osrmResponse = await firstValueFrom(this.http.get(osrmRouteUrl));
