@@ -10,7 +10,7 @@ import { ResponseCallbackDto } from 'src/auth/dto/response-callback.dto';
 export class MapController {
   constructor(private readonly mapService: MapService) {}
 
-  @Get('/:id?')
+  @Get(':id')
   @ApiOperation({
     summary: '흡연구역 상세 조회 API',
   })
