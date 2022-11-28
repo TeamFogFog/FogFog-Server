@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
-import { MapService } from './maps.service';
+import { MapsService } from './maps.service';
 import {
   ResponseSmokingAreaDto,
   ResponseSmokingArea,
@@ -10,8 +10,8 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller('maps')
 @ApiTags('maps')
-export class MapController {
-  constructor(private readonly mapService: MapService) {}
+export class MapsController {
+  constructor(private readonly mapService: MapsService) {}
 
   @Get(':id')
   @ApiOperation({

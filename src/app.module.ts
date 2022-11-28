@@ -7,9 +7,9 @@ import { HttpModule } from '@nestjs/axios';
 import { GlobalExceptionFilter } from './exceptions/global.exception';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MapController } from './maps/maps.controller';
-import { MapService } from './maps/maps.service';
-import { MapModule } from './maps/maps.module';
+import { MapsController } from './maps/maps.controller';
+import { MapsService } from './maps/maps.service';
+import { MapsModule } from './maps/maps.module';
 import { WebhookInterceptor } from './utils/webhook.interceptor';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
@@ -22,7 +22,7 @@ import { JwtService } from '@nestjs/jwt';
 @Module({
   imports: [
     AuthModule,
-    MapModule,
+    MapsModule,
     HttpModule,
     ConfigModule.forRoot({
       envFilePath: '.env',
@@ -31,7 +31,7 @@ import { JwtService } from '@nestjs/jwt';
     }),
     UsersModule,
   ],
-  controllers: [AppController, AuthController, MapController],
+  controllers: [AppController, AuthController, MapsController],
   providers: [
     AppService,
     {
@@ -43,7 +43,7 @@ import { JwtService } from '@nestjs/jwt';
       useClass: WebhookInterceptor,
     },
     AuthService,
-    MapService,
+    MapsService,
     PrismaService,
     JwtService,
   ],

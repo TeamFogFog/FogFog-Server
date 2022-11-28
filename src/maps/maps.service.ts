@@ -7,14 +7,14 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class MapService {
+export class MapsService {
   constructor(
     private prisma: PrismaService,
     private readonly http: HttpService,
     private readonly config: ConfigService,
   ) {}
 
-  private readonly logger = new Logger(MapService.name);
+  private readonly logger = new Logger(MapsService.name);
 
   async getMapById(
     mapId: number,
