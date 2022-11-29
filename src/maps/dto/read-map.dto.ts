@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber } from 'class-validator';
 
-export class ResponseSmokingArea {
+export class ResponseSmokingAreaData {
   @ApiProperty()
   name: string;
   @ApiProperty()
@@ -16,7 +16,7 @@ export class ResponseSmokingArea {
 
 export class ResponseSmokingAreaDto extends ResponseSuccessDto {
   @ApiProperty()
-  data: ResponseSmokingArea;
+  data: ResponseSmokingAreaData;
 }
 
 export class UpdateMapParam {
