@@ -3,7 +3,7 @@ import { MapsService } from './maps.service';
 import {
   ResponseSmokingAreaDto,
   ResponseSmokingAreaData,
-  UpdateMapParam,
+  ReadSmokingAreaParam,
 } from './dto/read-map.dto';
 import { wrapSuccess } from '../utils/success';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -18,7 +18,7 @@ export class MapsController {
     summary: '흡연구역 상세 조회 API',
   })
   async getMapById(
-    @Param() { id }: UpdateMapParam,
+    @Param() { id }: ReadSmokingAreaParam,
     @Query('lat') lat: number,
     @Query('lang') lang: number,
   ): Promise<ResponseSmokingAreaDto> {
