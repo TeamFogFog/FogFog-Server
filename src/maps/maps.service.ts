@@ -22,9 +22,10 @@ export class MapsService {
     lang: number,
   ): Promise<ResponseSmokingAreaData> {
     try {
-      const map = await this.prisma.map.findUnique({
+      const map = await this.prisma.map.findFirst({
         where: {
           id: mapId,
+          isDeleted: false,
         },
       });
 
