@@ -18,7 +18,6 @@ export class MapsController {
     summary: '흡연구역 상세 조회 API',
   })
   async getMapById(
-    // @Param('id') id: UpdateMapParam,
     @Param() { id }: UpdateMapParam,
     @Query('lat') lat: number,
     @Query('lang') lang: number,
