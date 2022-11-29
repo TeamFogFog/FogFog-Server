@@ -12,9 +12,7 @@ async function bootstrap() {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
   });
-  app.useGlobalPipes(
-    new ValidationPipe({ disableErrorMessages: true, transform: true }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ disableErrorMessages: true }));
   app.useGlobalFilters(new GlobalExceptionFilter());
   setUpSwagger(app);
   await app.listen(process.env.PORT || 3000);
