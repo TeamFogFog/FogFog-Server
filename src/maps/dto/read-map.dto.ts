@@ -19,7 +19,7 @@ export class ResponseSmokingAreaDto extends ResponseSuccessDto {
   data: ResponseSmokingAreaData;
 }
 
-export class UpdateMapParam {
+export class ReadSmokingAreaParam {
   @IsNumber()
   @Type(() => Number)
   readonly id: number;
