@@ -14,7 +14,7 @@ export class UsersService {
       const user = await this.prisma.user.create({ data: newUser });
       return user;
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Internal Server Error',
@@ -24,15 +24,15 @@ export class UsersService {
 
   async getUserById(id: number): Promise<User> {
     try {
-      const users = await this.prisma.user.findMany({
+      const user = await this.prisma.user.findFirst({
         where: {
           id,
           isDeleted: false,
         },
       });
-      return users[0];
+      return user;
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Internal Server Error',
@@ -42,15 +42,15 @@ export class UsersService {
 
   async getUserByKaKaoId(kakaoId: number): Promise<User> {
     try {
-      const users = await this.prisma.user.findMany({
+      const user = await this.prisma.user.findFirst({
         where: {
           kakaoId,
           isDeleted: false,
         },
       });
-      return users[0];
+      return user;
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Internal Server Error',
