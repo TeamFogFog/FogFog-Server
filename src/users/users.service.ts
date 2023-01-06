@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { User } from '@prisma/client';
 import CustomException from 'src/exceptions/custom.exception';
 import { PrismaService } from 'src/prisma.service';
+import { UpdateNicknameDto } from './dto/update-nickname.dto';
 
 @Injectable()
 export class UsersService {
@@ -69,6 +70,36 @@ export class UsersService {
       return updatedUser;
     } catch (error) {
       this.logger.error(error);
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Internal Server Error',
+      );
+    }
+  }
+
+  async updateNicknameByUserId(
+    userId: number,
+    id: number,
+    updateNicknameDto: UpdateNicknameDto,
+  ): Promise<void> {
+    if (userId !== id) {
+      throw new CustomException(HttpStatus.FORBIDDEN, 'Access Denied');
+    }
+
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id, isDeleted: false },
+        data: {
+          nickname: updateNicknameDto.nickname,
+        },
+      });
+      if (!updatedUser) {
+        throw new CustomException(HttpStatus.NOT_FOUND, 'User Not Found');
+      }
+
+      return;
+    } catch (error) {
+      this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'Internal Server Error',
