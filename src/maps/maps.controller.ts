@@ -67,6 +67,7 @@ export class MapsController {
     return wrapSuccess(HttpStatus.OK, '흡연구역 전체 조회 성공', data);
   }
 
+  @UseGuards(AccessTokenGuard)
   @Get(':id')
   @ApiOperation({
     summary: '흡연구역 상세 조회 API',
