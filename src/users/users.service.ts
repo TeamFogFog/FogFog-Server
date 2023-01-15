@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { User } from '@prisma/client';
 import CustomException from 'src/exceptions/custom.exception';
 import { PrismaService } from 'src/prisma.service';
+import { ResponseNicknameData } from './dto/response-nickname.dto';
 import { UpdateNicknameDto } from './dto/update-nickname.dto';
 
 @Injectable()
@@ -81,7 +82,7 @@ export class UsersService {
     userId: number,
     id: number,
     updateNicknameDto: UpdateNicknameDto,
-  ): Promise<void> {
+  ): Promise<ResponseNicknameData> {
     if (userId !== id) {
       throw new CustomException(HttpStatus.FORBIDDEN, 'Access Denied');
     }
@@ -97,7 +98,9 @@ export class UsersService {
         throw new CustomException(HttpStatus.NOT_FOUND, 'User Not Found');
       }
 
-      return;
+      return {
+        nickname: updatedUser.nickname,
+      };
     } catch (error) {
       this.logger.error({ error });
       throw new CustomException(
