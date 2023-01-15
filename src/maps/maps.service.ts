@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { ResponseSmokingAreaData } from './dto/read-map.dto';
+import { ResponseSmokingAreaData } from './dto/response-map.dto';
 import { HttpService } from '@nestjs/axios';
 import CustomException from 'src/exceptions/custom.exception';
 import { firstValueFrom } from 'rxjs';
@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   ResponseSmokingAreas,
   ResponseSmokingAreasData,
-} from './dto/read-maps.dto';
+} from './dto/response-maps.dto';
 
 @Injectable()
 export class MapsService {

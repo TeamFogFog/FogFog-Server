@@ -11,7 +11,6 @@ import { WebhookInterceptor } from './utils/webhook.interceptor';
 import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
 import { UsersModule } from './users/users.module';
-import { JwtModule, JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [

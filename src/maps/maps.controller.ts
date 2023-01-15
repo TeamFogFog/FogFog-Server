@@ -7,12 +7,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { MapsService } from './maps.service';
+import { ReadSmokingAreaParam, ReadSmokingAreaQuery } from './dto/read-map.dto';
 import {
-  ResponseSmokingAreaDto,
   ResponseSmokingAreaData,
-  ReadSmokingAreaParam,
-  ReadSmokingAreaQuery,
-} from './dto/read-map.dto';
+  ResponseSmokingAreaDto,
+} from './dto/response-map.dto';
 import { wrapSuccess } from '../utils/success';
 import {
   ApiBadRequestResponse,
@@ -26,11 +25,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AccessTokenGuard } from 'src/auth/guards';
+import { ReadSmokingAreasQuery } from './dto/read-maps.dto';
 import {
-  ReadSmokingAreasQuery,
   ResponseSmokingAreasData,
   ResponseSmokingAreasDto,
-} from './dto/read-maps.dto';
+} from './dto/response-maps.dto';
 
 @Controller('maps')
 @UseGuards(AccessTokenGuard)
