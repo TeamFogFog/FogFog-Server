@@ -5,6 +5,10 @@ import { HttpService } from '@nestjs/axios';
 import CustomException from 'src/exceptions/custom.exception';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
+import {
+  ResponseSmokingAreas,
+  ResponseSmokingAreasData,
+} from './dto/read-maps.dto';
 
 @Injectable()
 export class MapsService {
@@ -16,13 +20,36 @@ export class MapsService {
 
   private readonly logger = new Logger(MapsService.name);
 
+  async getMapsByLatAndLong(
+    lat: number,
+    long: number,
+  ): Promise<ResponseSmokingAreasData> {
+    try {
+      const areas: ResponseSmokingAreas[] = await this.prisma
+        .$queryRaw`SELECT id, latitude, longitude FROM ( SELECT id, latitude, longitude, (6371 * acos(cos(radians( ${lat} ) ) * cos(radians(latitude)) * cos(radians(longitude) - radians(${long})) + sin(radians(${lat})) * sin( radians(latitude)))) AS distance FROM "Map" ) DATA WHERE DATA.distance < 2`;
+
+      const data: ResponseSmokingAreasData = {
+        total: areas.length,
+        areas,
+      };
+
+      return data;
+    } catch (error) {
+      this.logger.error({ error });
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Internal Server Error',
+      );
+    }
+  }
+
   async getMapById(
     mapId: number,
     lat: number,
-    lang: number,
+    long: number,
   ): Promise<ResponseSmokingAreaData> {
     try {
-      const map = await this.prisma.map.findFirst({
+      const map = await this.prisma.map.findUnique({
         where: {
           id: mapId,
           isDeleted: false,
@@ -38,7 +65,7 @@ export class MapsService {
       const { latitude: destinationLatitude, longitude: destinationLongitude } =
         map;
 
-      const osrmRouteUrl = `http://router.project-osrm.org/route/v1/driving/${lang},${lat};${destinationLongitude},${destinationLatitude}`;
+      const osrmRouteUrl = `http://router.project-osrm.org/route/v1/foot/${long},${lat};${destinationLongitude},${destinationLatitude}`;
       const osrmResponse = await firstValueFrom(this.http.get(osrmRouteUrl));
       const distance = `${osrmResponse.data.routes[0].distance}m` ?? '-m';
 
