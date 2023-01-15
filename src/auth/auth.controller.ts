@@ -19,7 +19,6 @@ import {
   ApiForbiddenResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ResponseErrorDto } from 'src/common/dto/response-error.dto';
 import { wrapSuccess } from 'src/utils/success';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
@@ -33,6 +32,7 @@ import { RefreshTokenGuard } from './guards';
 
 @Controller('auth')
 @ApiTags('Auth')
+@ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -58,10 +58,12 @@ export class AuthController {
       '카카오/애플 로그인을 진행하고, access/refresh token을 발급합니다.',
   })
   @ApiCreatedResponse({ type: ResponseSignInDto })
-  @ApiNotFoundResponse({ type: ResponseErrorDto })
-  @ApiUnauthorizedResponse({ type: ResponseErrorDto })
-  @ApiInternalServerErrorResponse({
-    type: ResponseErrorDto,
+  @ApiNotFoundResponse({
+    description:
+      'Not Found - 소셜 로그인 토큰에 해당하는 유저 정보가 없는 경우',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
   async signin(@Body() signInDto: SignInDto): Promise<ResponseSignInDto> {
     const { socialType } = signInDto;
@@ -84,8 +86,10 @@ export class AuthController {
     description: 'refresh token 을 이용해 토큰을 재발급합니다.',
   })
   @ApiOkResponse({ type: ResponseTokenDto })
-  @ApiForbiddenResponse({ type: ResponseErrorDto })
-  @ApiInternalServerErrorResponse({ type: ResponseErrorDto })
+  @ApiForbiddenResponse({
+    description:
+      'Forbidden - 해당 유저의 accessToken, refreshToken이 유효하지(실제 DB와 매치되지) 않은 경우',
+  })
   async updateToken(@Req() req): Promise<ResponseTokenDto> {
     const { id, refreshToken } = req.user;
 

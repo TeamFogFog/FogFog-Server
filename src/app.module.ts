@@ -18,6 +18,8 @@ import configuration from './config/configuration';
 import { PrismaService } from './prisma.service';
 import { UsersModule } from './users/users.module';
 import { JwtService } from '@nestjs/jwt';
+import { UsersController } from './users/users.controller';
+import { UsersService } from './users/users.service';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { JwtService } from '@nestjs/jwt';
     }),
     UsersModule,
   ],
-  controllers: [AppController, AuthController, MapsController],
+  controllers: [AppController, AuthController, MapsController, UsersController],
   providers: [
     AppService,
     {
@@ -44,6 +46,7 @@ import { JwtService } from '@nestjs/jwt';
     },
     AuthService,
     MapsService,
+    UsersService,
     PrismaService,
     JwtService,
   ],
