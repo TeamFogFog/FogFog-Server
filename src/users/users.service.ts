@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { RESPONSE_MESSAGE } from 'src/common/objects';
 import CustomException from 'src/exceptions/custom.exception';
 import { PrismaService } from 'src/prisma.service';
 import { ResponseNicknameData } from './dto/response-nickname.dto';
@@ -19,7 +20,7 @@ export class UsersService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -37,7 +38,7 @@ export class UsersService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -55,7 +56,25 @@ export class UsersService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getUserByAppleId(appleId: string): Promise<User> {
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: {
+          appleId,
+          isDeleted: false,
+        },
+      });
+      return user;
+    } catch (error) {
+      this.logger.error({ error });
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -73,7 +92,7 @@ export class UsersService {
       this.logger.error(error);
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -84,7 +103,10 @@ export class UsersService {
     updateNicknameDto: UpdateNicknameDto,
   ): Promise<ResponseNicknameData> {
     if (userId !== id) {
-      throw new CustomException(HttpStatus.FORBIDDEN, 'Access Denied');
+      throw new CustomException(
+        HttpStatus.FORBIDDEN,
+        RESPONSE_MESSAGE.FORBIDDEN,
+      );
     }
 
     try {
@@ -95,7 +117,10 @@ export class UsersService {
         },
       });
       if (!updatedUser) {
-        throw new CustomException(HttpStatus.NOT_FOUND, 'User Not Found');
+        throw new CustomException(
+          HttpStatus.NOT_FOUND,
+          RESPONSE_MESSAGE.NOT_FOUND,
+        );
       }
 
       return {
@@ -105,7 +130,7 @@ export class UsersService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
