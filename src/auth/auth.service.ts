@@ -10,12 +10,18 @@ import { UsersService } from 'src/users/users.service';
 import { ResponseCallbackData } from './dto/response-callback.dto';
 import { SignInDto } from './dto/signin.dto';
 import CustomException from 'src/exceptions/custom.exception';
-import { SOCIAL_TYPE, GENDER_TYPE } from 'src/common/objects';
+import { SOCIAL_TYPE, GENDER_TYPE, RESPONSE_MESSAGE } from 'src/common/objects';
 import { convertObjectKey } from 'src/utils/convertObjectKey';
 import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { JwtToken } from 'src/common/interfaces/jwt-token.interface';
 import { ResponseSignInData } from './dto/response-signin.dto';
 import { ResponseTokenData } from './dto/response-token.dto';
+import {
+  AppleJwtTokenPayload,
+  DecodedTokenPayload,
+} from 'src/common/interfaces/apple-payload.interface';
+import * as jwt from 'jsonwebtoken';
+import JwksRsa, { JwksClient } from 'jwks-rsa';
 
 @Injectable()
 export class AuthService {
@@ -65,7 +71,10 @@ export class AuthService {
     try {
       const user = await this.usersService.getUserById(id);
       if (!user || !user.refreshToken) {
-        throw new CustomException(HttpStatus.FORBIDDEN, 'Access Denied');
+        throw new CustomException(
+          HttpStatus.FORBIDDEN,
+          RESPONSE_MESSAGE.FORBIDDEN,
+        );
       }
 
       const isRefreshTokenMatch: boolean = await argon2.verify(
@@ -73,7 +82,10 @@ export class AuthService {
         hashedRefreshToken,
       );
       if (!isRefreshTokenMatch) {
-        throw new CustomException(HttpStatus.FORBIDDEN, 'Access Denied');
+        throw new CustomException(
+          HttpStatus.FORBIDDEN,
+          RESPONSE_MESSAGE.FORBIDDEN,
+        );
       }
 
       const newTokens = await this.getJwtToken(user);
@@ -91,7 +103,7 @@ export class AuthService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -114,7 +126,7 @@ export class AuthService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -125,7 +137,7 @@ export class AuthService {
     if (!kakaoAccessToken) {
       throw new CustomException(
         HttpStatus.UNAUTHORIZED,
-        'Uunautorized - No Access Token',
+        RESPONSE_MESSAGE.UNAUTHORIZED,
       );
     }
 
@@ -145,7 +157,7 @@ export class AuthService {
       if (!userResponse) {
         throw new CustomException(
           HttpStatus.NOT_FOUND,
-          'Not Found - Kakao User',
+          RESPONSE_MESSAGE.NOT_FOUND,
         );
       }
 
@@ -206,7 +218,84 @@ export class AuthService {
       }
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async verifyAppleIdToken(idToken: string): Promise<AppleJwtTokenPayload> {
+    const decodedToken: DecodedTokenPayload = jwt.decode(idToken, {
+      complete: true,
+    }) as DecodedTokenPayload;
+    const keyIdFromToken: string = decodedToken.header.kid;
+
+    const applePublicKeyUrl: string = 'https://appleid.apple.com/auth/keys';
+
+    const jwksClient = new JwksClient({ jwksUri: applePublicKeyUrl });
+
+    const key: JwksRsa.SigningKey = await jwksClient.getSigningKey(
+      keyIdFromToken,
+    );
+    const publicKey: string = key.getPublicKey();
+
+    const verifiedDecodedToken: AppleJwtTokenPayload = jwt.verify(
+      idToken,
+      publicKey,
+      {
+        algorithms: [decodedToken.header.alg],
+      },
+    ) as AppleJwtTokenPayload;
+
+    return verifiedDecodedToken;
+  }
+
+  async createAppleUser(signInDto: SignInDto): Promise<ResponseSignInData> {
+    try {
+      const verifiedToken: AppleJwtTokenPayload = await this.verifyAppleIdToken(
+        signInDto.idToken,
+      );
+
+      this.logger.debug('verify apple id token success', verifiedToken);
+
+      const { sub, email } = verifiedToken;
+
+      let user = await this.usersService.getUserByAppleId(sub);
+
+      if (!user) {
+        let convertSocialType: number = convertObjectKey(
+          SOCIAL_TYPE,
+          signInDto.socialType,
+        );
+        const newUser = {
+          appleId: sub,
+          socialType: convertSocialType,
+          email: email ?? undefined,
+        };
+
+        user = await this.usersService.createUser(newUser);
+      }
+
+      const tokens: JwtToken = await this.getJwtToken(user);
+      const hashedRefreshToken: string = await this.getHashedRefreshToken(
+        tokens.refreshToken,
+      );
+
+      await this.usersService.updateRefreshTokenByUserId(
+        user.id,
+        hashedRefreshToken,
+      );
+
+      return {
+        ...tokens,
+        id: user.id,
+      };
+    } catch (error) {
+      this.logger.error({ error });
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new CustomException(HttpStatus.UNAUTHORIZED, error.message);
+      }
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }

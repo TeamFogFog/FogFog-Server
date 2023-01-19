@@ -18,7 +18,10 @@ import {
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiBearerAuth,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { RESPONSE_MESSAGE } from 'src/common/objects';
+import CustomException from 'src/exceptions/custom.exception';
 import { wrapSuccess } from 'src/utils/success';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
@@ -48,7 +51,11 @@ export class AuthController {
   ): Promise<ResponseCallbackDto> {
     const data = await this.authService.getKakaoAccessToken(code);
 
-    return wrapSuccess(HttpStatus.OK, 'access token 발급 성공', data);
+    return wrapSuccess(
+      HttpStatus.OK,
+      RESPONSE_MESSAGE.ISSUED_TOKEN_SUCCESS,
+      data,
+    );
   }
 
   @Post('signin')
@@ -58,6 +65,10 @@ export class AuthController {
       '카카오/애플 로그인을 진행하고, access/refresh token을 발급합니다.',
   })
   @ApiCreatedResponse({ type: ResponseSignInDto })
+  @ApiBadRequestResponse({
+    description:
+      'Bad Request - 소셜 로그인 토큰을 보내지 않거나 kakao, apple 둘 다 보낸 경우',
+  })
   @ApiNotFoundResponse({
     description:
       'Not Found - 소셜 로그인 토큰에 해당하는 유저 정보가 없는 경우',
@@ -66,16 +77,30 @@ export class AuthController {
     description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
   async signin(@Body() signInDto: SignInDto): Promise<ResponseSignInDto> {
-    const { socialType } = signInDto;
+    const { socialType, kakaoAccessToken, idToken } = signInDto;
+
+    if ((kakaoAccessToken && idToken) || (!kakaoAccessToken && !idToken)) {
+      throw new CustomException(
+        HttpStatus.BAD_REQUEST,
+        RESPONSE_MESSAGE.BAD_REQUEST,
+      );
+    }
+
     let data: ResponseSignInData;
 
     switch (socialType) {
       case 'kakao':
         data = await this.authService.createKakaoUser(signInDto);
         break;
+      case 'apple':
+        data = await this.authService.createAppleUser(signInDto);
     }
 
-    return wrapSuccess(HttpStatus.CREATED, '로그인/회원가입 성공', data);
+    return wrapSuccess(
+      HttpStatus.CREATED,
+      RESPONSE_MESSAGE.SIGNIN_USER_SUCCESS,
+      data,
+    );
   }
 
   @UseGuards(RefreshTokenGuard)
@@ -98,6 +123,10 @@ export class AuthController {
       refreshToken,
     );
 
-    return wrapSuccess(HttpStatus.OK, '토큰 재발급 성공', data);
+    return wrapSuccess(
+      HttpStatus.OK,
+      RESPONSE_MESSAGE.REISSUED_TOKEN_SUCCESS,
+      data,
+    );
   }
 }
