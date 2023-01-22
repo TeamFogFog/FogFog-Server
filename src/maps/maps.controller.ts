@@ -30,6 +30,7 @@ import {
   ResponseSmokingAreasData,
   ResponseSmokingAreasDto,
 } from './dto/response-maps.dto';
+import { RESPONSE_MESSAGE } from 'src/common/objects';
 
 @Controller('maps')
 @UseGuards(AccessTokenGuard)
@@ -66,7 +67,11 @@ export class MapsController {
     const data: ResponseSmokingAreasData =
       await this.mapService.getMapsByLatAndLong(lat, long);
 
-    return wrapSuccess(HttpStatus.OK, '흡연구역 전체 조회 성공', data);
+    return wrapSuccess(
+      HttpStatus.OK,
+      RESPONSE_MESSAGE.READ_SMOKING_AREAS_SUCCESS,
+      data,
+    );
   }
 
   @Get(':id')
@@ -109,6 +114,10 @@ export class MapsController {
       lat,
       long,
     );
-    return wrapSuccess(HttpStatus.OK, '흡연구역 상세 조회 성공', data);
+    return wrapSuccess(
+      HttpStatus.OK,
+      RESPONSE_MESSAGE.READ_SMOKING_AREA_SUCCESS,
+      data,
+    );
   }
 }

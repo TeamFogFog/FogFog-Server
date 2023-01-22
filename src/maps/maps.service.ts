@@ -9,6 +9,7 @@ import {
   ResponseSmokingAreas,
   ResponseSmokingAreasData,
 } from './dto/response-maps.dto';
+import { RESPONSE_MESSAGE } from 'src/common/objects';
 
 @Injectable()
 export class MapsService {
@@ -38,7 +39,7 @@ export class MapsService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -57,7 +58,10 @@ export class MapsService {
       });
 
       if (!map) {
-        throw new CustomException(HttpStatus.NOT_FOUND, 'Not Found - Map');
+        throw new CustomException(
+          HttpStatus.NOT_FOUND,
+          RESPONSE_MESSAGE.NOT_FOUND,
+        );
       }
 
       const defaultImage = this.config.get('DEFAULT_IMAGE');
@@ -81,7 +85,7 @@ export class MapsService {
       this.logger.error({ error });
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal Server Error',
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
       );
     }
   }

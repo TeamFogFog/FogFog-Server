@@ -17,6 +17,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AccessTokenGuard } from 'src/auth/guards';
+import { RESPONSE_MESSAGE } from 'src/common/objects';
 import { wrapSuccess } from 'src/utils/success';
 import {
   ResponseNicknameData,
@@ -63,6 +64,10 @@ export class UsersController {
         updateNicknameDto,
       );
 
-    return wrapSuccess(HttpStatus.OK, '유저 닉네임 수정 성공', data);
+    return wrapSuccess(
+      HttpStatus.OK,
+      RESPONSE_MESSAGE.UPDATE_NICKNAME_SUCCESS,
+      data,
+    );
   }
 }
