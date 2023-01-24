@@ -27,7 +27,7 @@ export class UsersService {
 
   async getUserById(id: number): Promise<User> {
     try {
-      const user = await this.prisma.user.findFirst({
+      const user = await this.prisma.user.findUnique({
         where: {
           id,
           isDeleted: false,
@@ -72,6 +72,38 @@ export class UsersService {
       return user;
     } catch (error) {
       this.logger.error({ error });
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getNicknameByUserId(
+    userId: number,
+    id: number,
+  ): Promise<ResponseNicknameData> {
+    if (userId !== id) {
+      throw new CustomException(
+        HttpStatus.FORBIDDEN,
+        RESPONSE_MESSAGE.FORBIDDEN,
+      );
+    }
+
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id,
+          isDeleted: false,
+        },
+        select: {
+          nickname: true,
+        },
+      });
+
+      return user;
+    } catch (error) {
+      this.logger.error(error);
       throw new CustomException(
         HttpStatus.INTERNAL_SERVER_ERROR,
         RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,

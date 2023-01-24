@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
   Param,
   Patch,
@@ -19,6 +20,7 @@ import {
 import { AccessTokenGuard } from 'src/auth/guards';
 import { RESPONSE_MESSAGE } from 'src/common/objects';
 import { wrapSuccess } from 'src/utils/success';
+import { ReadNicknameParams } from './dto/read-nickname.dto';
 import {
   ResponseNicknameData,
   ResponseNicknameDto,
@@ -34,8 +36,37 @@ import { UsersService } from './users.service';
 @ApiTags('Users')
 @ApiBearerAuth('accessToken')
 @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+@ApiForbiddenResponse({
+  description: 'Forbidden - 요청 id 와 accessToken 정보가 매치되지 않는 경우',
+})
 export class UsersController {
   constructor(private usersService: UsersService) {}
+
+  @Get(':id/nickname')
+  @ApiOperation({
+    summary: '유저 닉네임 조회 API',
+    description: '유저 닉네임 조회',
+  })
+  @ApiParam({
+    type: Number,
+    name: 'id',
+    required: true,
+    description: 'user id',
+  })
+  @ApiOkResponse({ type: ResponseNicknameDto })
+  async getNickname(
+    @Req() req,
+    @Param() { id }: ReadNicknameParams,
+  ): Promise<ResponseNicknameDto> {
+    const data: ResponseNicknameData =
+      await this.usersService.getNicknameByUserId(req.user?.id, id);
+
+    return wrapSuccess(
+      HttpStatus.OK,
+      RESPONSE_MESSAGE.READ_NICKNAME_SUCCESS,
+      data,
+    );
+  }
 
   @Patch(':id/nickname')
   @ApiOperation({
@@ -49,9 +80,6 @@ export class UsersController {
     description: 'user id',
   })
   @ApiOkResponse({ type: ResponseNicknameDto })
-  @ApiForbiddenResponse({
-    description: 'Forbidden - 요청 id 와 accessToken 정보가 매치되지 않는 경우',
-  })
   async updateNickname(
     @Req() req,
     @Param() { id }: UpdateNicknameParams,
