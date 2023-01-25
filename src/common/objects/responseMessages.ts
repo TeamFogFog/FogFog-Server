@@ -19,6 +19,7 @@ export const RESPONSE_MESSAGE: {
   REISSUED_TOKEN_SUCCESS: '토큰 재발급 성공',
 
   // user
+  READ_NICKNAME_SUCCESS: '유저 닉네임 조회 성공',
   UPDATE_NICKNAME_SUCCESS: '유저 닉네임 수정 성공',
 
   // map

@@ -8,13 +8,13 @@ import * as argon2 from 'argon2';
 import { AxiosError } from 'axios';
 import { UsersService } from 'src/users/users.service';
 import { ResponseCallbackData } from './dto/response-callback.dto';
-import { SignInDto } from './dto/signin.dto';
+import { SigninDto } from './dto/signin.dto';
 import CustomException from 'src/exceptions/custom.exception';
 import { SOCIAL_TYPE, GENDER_TYPE, RESPONSE_MESSAGE } from 'src/common/objects';
 import { convertObjectKey } from 'src/utils/convertObjectKey';
 import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { JwtToken } from 'src/common/interfaces/jwt-token.interface';
-import { ResponseSignInData } from './dto/response-signin.dto';
+import { ResponseSigninData } from './dto/response-signin.dto';
 import { ResponseTokenData } from './dto/response-token.dto';
 import {
   AppleJwtTokenPayload,
@@ -131,8 +131,8 @@ export class AuthService {
     }
   }
 
-  async createKakaoUser(signInDto: SignInDto): Promise<ResponseSignInData> {
-    const { kakaoAccessToken, socialType }: SignInDto = signInDto;
+  async createKakaoUser(signinDto: SigninDto): Promise<ResponseSigninData> {
+    const { kakaoAccessToken, socialType }: SigninDto = signinDto;
 
     if (!kakaoAccessToken) {
       throw new CustomException(
@@ -248,7 +248,7 @@ export class AuthService {
     return verifiedDecodedToken;
   }
 
-  async createAppleUser(signInDto: SignInDto): Promise<ResponseSignInData> {
+  async createAppleUser(signInDto: SigninDto): Promise<ResponseSigninData> {
     try {
       const verifiedToken: AppleJwtTokenPayload = await this.verifyAppleIdToken(
         signInDto.idToken,

@@ -26,11 +26,11 @@ import { wrapSuccess } from 'src/utils/success';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
 import {
-  ResponseSignInData,
-  ResponseSignInDto,
+  ResponseSigninData,
+  ResponseSigninDto,
 } from './dto/response-signin.dto';
 import { ResponseTokenData, ResponseTokenDto } from './dto/response-token.dto';
-import { SignInDto } from './dto/signin.dto';
+import { SigninDto } from './dto/signin.dto';
 import { RefreshTokenGuard } from './guards';
 
 @Controller('auth')
@@ -64,7 +64,7 @@ export class AuthController {
     description:
       '카카오/애플 로그인을 진행하고, access/refresh token을 발급합니다.',
   })
-  @ApiCreatedResponse({ type: ResponseSignInDto })
+  @ApiCreatedResponse({ type: ResponseSigninDto })
   @ApiBadRequestResponse({
     description:
       'Bad Request - 소셜 로그인 토큰을 보내지 않거나 kakao, apple 둘 다 보낸 경우',
@@ -76,8 +76,8 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
-  async signin(@Body() signInDto: SignInDto): Promise<ResponseSignInDto> {
-    const { socialType, kakaoAccessToken, idToken } = signInDto;
+  async signin(@Body() signinDto: SigninDto): Promise<ResponseSigninDto> {
+    const { socialType, kakaoAccessToken, idToken } = signinDto;
 
     if ((kakaoAccessToken && idToken) || (!kakaoAccessToken && !idToken)) {
       throw new CustomException(
@@ -86,14 +86,14 @@ export class AuthController {
       );
     }
 
-    let data: ResponseSignInData;
+    let data: ResponseSigninData;
 
     switch (socialType) {
       case 'kakao':
-        data = await this.authService.createKakaoUser(signInDto);
+        data = await this.authService.createKakaoUser(signinDto);
         break;
       case 'apple':
-        data = await this.authService.createAppleUser(signInDto);
+        data = await this.authService.createAppleUser(signinDto);
     }
 
     return wrapSuccess(
