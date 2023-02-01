@@ -29,6 +29,11 @@ import {
   UpdateNicknameDto,
   UpdateNicknameParams,
 } from './dto/update-nickname.dto';
+import { ResponseSuccessDto } from 'src/common/dto/response-success.dto';
+import {
+  UpdatePreferredMapDto,
+  UpdatePreferredMapParams,
+} from './dto/update-preferredMap.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -96,6 +101,36 @@ export class UsersController {
       HttpStatus.OK,
       RESPONSE_MESSAGE.UPDATE_NICKNAME_SUCCESS,
       data,
+    );
+  }
+
+  @Patch(':id/preferred-map')
+  @ApiOperation({
+    summary: '유저  선호지도 설정 API',
+    description: '유저 선호지도 설정 / 수정',
+  })
+  @ApiParam({
+    type: Number,
+    name: 'id',
+    required: true,
+    description: 'user id',
+  })
+  @ApiOkResponse({ type: ResponseSuccessDto })
+  async updatePreferredMap(
+    @Req() req,
+    @Param() { id }: UpdatePreferredMapParams,
+    @Body() updatePreferredMapDto: UpdatePreferredMapDto,
+  ): Promise<ResponseSuccessDto> {
+    console.log('here');
+    console.log(id);
+    await this.usersService.updatePreferredMapByUserId(
+      req.user?.id,
+      id,
+      updatePreferredMapDto,
+    );
+    return wrapSuccess(
+      HttpStatus.OK,
+      RESPONSE_MESSAGE.UPDATE_PREFERRED_MAP_SUCCESS,
     );
   }
 }
