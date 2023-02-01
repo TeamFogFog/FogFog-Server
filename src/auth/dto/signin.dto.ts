@@ -12,4 +12,7 @@ export class SigninDto {
 
   @ApiPropertyOptional({ description: 'apple id token' })
   idToken?: string;
+
+  @ApiPropertyOptional({ description: 'apple authorization code' })
+  code?: string;
 }

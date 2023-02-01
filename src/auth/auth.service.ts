@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, catchError } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -19,9 +19,13 @@ import { ResponseTokenData } from './dto/response-token.dto';
 import {
   AppleJwtTokenPayload,
   DecodedTokenPayload,
+  RequestTokenPayload,
 } from 'src/common/interfaces/apple-payload.interface';
 import * as jwt from 'jsonwebtoken';
 import JwksRsa, { JwksClient } from 'jwks-rsa';
+import * as fs from 'fs';
+import { join } from 'path';
+import * as qs from 'qs';
 
 @Injectable()
 export class AuthService {
@@ -222,6 +226,66 @@ export class AuthService {
       );
     }
   }
+
+  async getAppleRefreshToken(code: string) {
+    const header = {
+      kid: this.config.get<string>('appleKeyId'),
+      alg: 'ES256',
+    };
+
+    const payload = {
+      iss: this.config.get<string>('appleTeamId'),
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 15777000,
+      aud: 'https://appleid.apple.com',
+      sub: this.config.get<string>('appleClientId'),
+    };
+
+    const privateKey: string = fs
+      .readFileSync(
+        join(
+          process.cwd(),
+          `../${this.config.get<string>('appleKeyFilePath')}`,
+        ),
+      )
+      .toString();
+
+    try {
+      const clientSecret = jwt.sign(payload, privateKey, {
+        header,
+      });
+
+      const data: RequestTokenPayload = {
+        client_id: this.config.get<string>('appleClientId'),
+        client_secret: clientSecret,
+        grant_type: 'authorization_code',
+        code,
+      };
+
+      const response = await firstValueFrom(
+        this.http
+          .post('https://appleid.apple.com/auth/token', qs.stringify(data))
+          .pipe(
+            catchError((error: AxiosError) => {
+              this.logger.error(error.response.data);
+              throw new CustomException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+              );
+            }),
+          ),
+      );
+
+      return response.data.refresh_token;
+    } catch (error) {
+      this.logger.error(error);
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async verifyAppleIdToken(idToken: string): Promise<AppleJwtTokenPayload> {
     const decodedToken: DecodedTokenPayload = jwt.decode(idToken, {
       complete: true,
@@ -248,27 +312,35 @@ export class AuthService {
     return verifiedDecodedToken;
   }
 
-  async createAppleUser(signInDto: SigninDto): Promise<ResponseSigninData> {
+  async createAppleUser(signinDto: SigninDto): Promise<ResponseSigninData> {
     try {
       const verifiedToken: AppleJwtTokenPayload = await this.verifyAppleIdToken(
-        signInDto.idToken,
+        signinDto.idToken,
       );
 
-      this.logger.debug('verify apple id token success', verifiedToken);
+      this.logger.debug('verify apple id token success');
 
       const { sub, email } = verifiedToken;
 
       let user = await this.usersService.getUserByAppleId(sub);
 
       if (!user) {
+        const refreshToken: string = await this.getAppleRefreshToken(
+          signinDto.code,
+        );
+
+        this.logger.debug('request apple refresh token success');
+
         let convertSocialType: number = convertObjectKey(
           SOCIAL_TYPE,
-          signInDto.socialType,
+          signinDto.socialType,
         );
+
         const newUser = {
           appleId: sub,
           socialType: convertSocialType,
           email: email ?? undefined,
+          appleRefreshToken: refreshToken,
         };
 
         user = await this.usersService.createUser(newUser);

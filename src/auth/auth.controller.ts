@@ -77,9 +77,26 @@ export class AuthController {
     description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
   async signin(@Body() signinDto: SigninDto): Promise<ResponseSigninDto> {
-    const { socialType, kakaoAccessToken, idToken } = signinDto;
+    const { socialType, kakaoAccessToken, idToken, code } = signinDto;
 
-    if ((kakaoAccessToken && idToken) || (!kakaoAccessToken && !idToken)) {
+    if (
+      (kakaoAccessToken && idToken && code) ||
+      (!kakaoAccessToken && !idToken && !code)
+    ) {
+      throw new CustomException(
+        HttpStatus.BAD_REQUEST,
+        RESPONSE_MESSAGE.BAD_REQUEST,
+      );
+    }
+
+    if (socialType === 'apple' && (!idToken || !code)) {
+      throw new CustomException(
+        HttpStatus.BAD_REQUEST,
+        RESPONSE_MESSAGE.BAD_REQUEST,
+      );
+    }
+
+    if (socialType === 'kakao' && (!kakaoAccessToken || idToken || code)) {
       throw new CustomException(
         HttpStatus.BAD_REQUEST,
         RESPONSE_MESSAGE.BAD_REQUEST,
