@@ -121,8 +121,6 @@ export class UsersController {
     @Param() { id }: UpdatePreferredMapParams,
     @Body() updatePreferredMapDto: UpdatePreferredMapDto,
   ): Promise<ResponseSuccessDto> {
-    console.log('here');
-    console.log(id);
     await this.usersService.updatePreferredMapByUserId(
       req.user?.id,
       id,
