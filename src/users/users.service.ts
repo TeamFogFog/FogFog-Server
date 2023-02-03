@@ -180,13 +180,6 @@ export class UsersService {
       );
     }
 
-    if (updatePreferredMapDto.preferredMap > 2) {
-      throw new CustomException(
-        HttpStatus.BAD_REQUEST,
-        RESPONSE_MESSAGE.BAD_REQUEST,
-      );
-    }
-
     try {
       const updatedUser = await this.prisma.user.update({
         where: { id, isDeleted: false },

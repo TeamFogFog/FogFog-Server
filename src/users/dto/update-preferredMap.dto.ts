@@ -6,7 +6,7 @@ export class UpdatePreferredMapDto {
   @ApiProperty({ description: '0 - 카카오 / 1 - 구글 / 2 - 네이버' })
   @IsNumber()
   @IsNotEmpty()
-  preferredMap: number;
+  preferredMap: 0 | 1 | 2;
 }
 
 export class UpdatePreferredMapParams {
