@@ -5,6 +5,7 @@ import CustomException from 'src/exceptions/custom.exception';
 import { PrismaService } from 'src/prisma.service';
 import { ResponseNicknameData } from './dto/response-nickname.dto';
 import { UpdateNicknameDto } from './dto/update-nickname.dto';
+import { UpdatePreferredMapDto } from './dto/update-preferredMap.dto';
 
 @Injectable()
 export class UsersService {
@@ -158,6 +159,40 @@ export class UsersService {
       return {
         nickname: updatedUser.nickname,
       };
+    } catch (error) {
+      this.logger.error({ error });
+      throw new CustomException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updatePreferredMapByUserId(
+    userId: number,
+    id: number,
+    updatePreferredMapDto: UpdatePreferredMapDto,
+  ): Promise<void> {
+    if (userId !== id) {
+      throw new CustomException(
+        HttpStatus.FORBIDDEN,
+        RESPONSE_MESSAGE.FORBIDDEN,
+      );
+    }
+
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id, isDeleted: false },
+        data: {
+          preferredMap: updatePreferredMapDto.preferredMap,
+        },
+      });
+      if (!updatedUser) {
+        throw new CustomException(
+          HttpStatus.NOT_FOUND,
+          RESPONSE_MESSAGE.NOT_FOUND,
+        );
+      }
     } catch (error) {
       this.logger.error({ error });
       throw new CustomException(
