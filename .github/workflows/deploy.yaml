@@ -52,6 +52,13 @@ jobs:
           echo ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }} >> .env
           echo REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }} >> .env
           cat .env
+
+      - name: Create apple .p8
+        run: |
+          cd src
+          touch ${{ secrets.APPLE_KEYFILE_PATH }}
+          echo "${{ secrets.APPLE_PRIVATE_KEY }}" > ${{ secrets.APPLE_KEYFILE_PATH }}
+
       # Initialize Node.js
       - name: Install Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
