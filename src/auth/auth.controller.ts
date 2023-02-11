@@ -23,6 +23,7 @@ import {
 import { RESPONSE_MESSAGE } from 'src/common/objects';
 import CustomException from 'src/exceptions/custom.exception';
 import { wrapSuccess } from 'src/utils/success';
+import validation from 'src/utils/validation';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
 import {
@@ -77,32 +78,9 @@ export class AuthController {
     description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
   async signin(@Body() signinDto: SigninDto): Promise<ResponseSigninDto> {
-    const { socialType, kakaoAccessToken, idToken, code } = signinDto;
+    await validation.validationSignin(signinDto);
 
-    if (
-      (kakaoAccessToken && idToken && code) ||
-      (!kakaoAccessToken && !idToken && !code)
-    ) {
-      throw new CustomException(
-        HttpStatus.BAD_REQUEST,
-        RESPONSE_MESSAGE.BAD_REQUEST,
-      );
-    }
-
-    if (socialType === 'apple' && (!idToken || !code)) {
-      throw new CustomException(
-        HttpStatus.BAD_REQUEST,
-        RESPONSE_MESSAGE.BAD_REQUEST,
-      );
-    }
-
-    if (socialType === 'kakao' && (!kakaoAccessToken || idToken || code)) {
-      throw new CustomException(
-        HttpStatus.BAD_REQUEST,
-        RESPONSE_MESSAGE.BAD_REQUEST,
-      );
-    }
-
+    const { socialType } = signinDto;
     let data: ResponseSigninData;
 
     switch (socialType) {
