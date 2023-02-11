@@ -1,8 +1,8 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { RESPONSE_MESSAGE } from 'src/common/objects';
 import CustomException from 'src/exceptions/custom.exception';
 import { PrismaService } from 'src/prisma.service';
+import { forbidden, internalServerError, notFound } from 'src/utils/error';
 import { ResponseNicknameData } from './dto/response-nickname.dto';
 import { UpdateNicknameDto } from './dto/update-nickname.dto';
 
@@ -12,20 +12,17 @@ export class UsersService {
 
   private readonly logger = new Logger(UsersService.name);
 
-  async createUser(newUser) {
+  async createUser(newUser): Promise<User | CustomException> {
     try {
       const user = await this.prisma.user.create({ data: newUser });
       return user;
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
-  async getUserById(id: number): Promise<User> {
+  async getUserById(id: number): Promise<User | CustomException> {
     try {
       const user = await this.prisma.user.findUnique({
         where: {
@@ -36,14 +33,11 @@ export class UsersService {
       return user;
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
-  async getUserByKaKaoId(kakaoId: number): Promise<User> {
+  async getUserByKaKaoId(kakaoId: number): Promise<User | CustomException> {
     try {
       const user = await this.prisma.user.findFirst({
         where: {
@@ -54,14 +48,11 @@ export class UsersService {
       return user;
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
-  async getUserByAppleId(appleId: string): Promise<User> {
+  async getUserByAppleId(appleId: string): Promise<User | CustomException> {
     try {
       const user = await this.prisma.user.findFirst({
         where: {
@@ -72,22 +63,16 @@ export class UsersService {
       return user;
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
   async getNicknameByUserId(
     userId: number,
     id: number,
-  ): Promise<ResponseNicknameData> {
+  ): Promise<ResponseNicknameData | CustomException> {
     if (userId !== id) {
-      throw new CustomException(
-        HttpStatus.FORBIDDEN,
-        RESPONSE_MESSAGE.FORBIDDEN,
-      );
+      return forbidden();
     }
 
     try {
@@ -104,14 +89,14 @@ export class UsersService {
       return user;
     } catch (error) {
       this.logger.error(error);
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
-  async updateRefreshTokenByUserId(id: number, refreshToken: string) {
+  async updateRefreshTokenByUserId(
+    id: number,
+    refreshToken: string,
+  ): Promise<User | CustomException> {
     try {
       const updatedUser = await this.prisma.user.update({
         where: { id },
@@ -122,10 +107,7 @@ export class UsersService {
       return updatedUser;
     } catch (error) {
       this.logger.error(error);
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
@@ -133,12 +115,9 @@ export class UsersService {
     userId: number,
     id: number,
     updateNicknameDto: UpdateNicknameDto,
-  ): Promise<ResponseNicknameData> {
+  ): Promise<ResponseNicknameData | CustomException> {
     if (userId !== id) {
-      throw new CustomException(
-        HttpStatus.FORBIDDEN,
-        RESPONSE_MESSAGE.FORBIDDEN,
-      );
+      return forbidden();
     }
 
     try {
@@ -149,10 +128,7 @@ export class UsersService {
         },
       });
       if (!updatedUser) {
-        throw new CustomException(
-          HttpStatus.NOT_FOUND,
-          RESPONSE_MESSAGE.NOT_FOUND,
-        );
+        return notFound();
       }
 
       return {
@@ -160,10 +136,7 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 }

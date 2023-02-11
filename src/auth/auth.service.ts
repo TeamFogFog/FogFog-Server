@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { firstValueFrom, catchError } from 'rxjs';
+import { firstValueFrom, catchError, ObservableInput } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -26,6 +26,12 @@ import JwksRsa, { JwksClient } from 'jwks-rsa';
 import * as fs from 'fs';
 import { join } from 'path';
 import * as qs from 'qs';
+import {
+  forbidden,
+  internalServerError,
+  notFound,
+  unauthorized,
+} from 'src/utils/error';
 
 @Injectable()
 export class AuthService {
@@ -71,7 +77,7 @@ export class AuthService {
   async updateToken(
     id: number,
     hashedRefreshToken: string,
-  ): Promise<ResponseTokenData> {
+  ): Promise<ResponseTokenData | CustomException> {
     try {
       const user = await this.usersService.getUserById(id);
       if (!user || !user.refreshToken) {
@@ -86,10 +92,7 @@ export class AuthService {
         hashedRefreshToken,
       );
       if (!isRefreshTokenMatch) {
-        throw new CustomException(
-          HttpStatus.FORBIDDEN,
-          RESPONSE_MESSAGE.FORBIDDEN,
-        );
+        return forbidden();
       }
 
       const newTokens = await this.getJwtToken(user);
@@ -105,14 +108,13 @@ export class AuthService {
       return newTokens;
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
-  async getKakaoAccessToken(code: string): Promise<ResponseCallbackData> {
+  async getKakaoAccessToken(
+    code: string,
+  ): Promise<ResponseCallbackData | CustomException> {
     const kakaoRequestTokenUrl = `https://kauth.kakao.com/oauth/token
 	?grant_type=authorization_code
 	&client_id=${this.config.get('kakaoClientId')}
@@ -128,21 +130,17 @@ export class AuthService {
       return { accessToken };
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
-  async createKakaoUser(signinDto: SigninDto): Promise<ResponseSigninData> {
+  async createKakaoUser(
+    signinDto: SigninDto,
+  ): Promise<ResponseSigninData | CustomException> {
     const { kakaoAccessToken, socialType }: SigninDto = signinDto;
 
     if (!kakaoAccessToken) {
-      throw new CustomException(
-        HttpStatus.UNAUTHORIZED,
-        RESPONSE_MESSAGE.UNAUTHORIZED,
-      );
+      return unauthorized();
     }
 
     const requestHeader = {
@@ -159,10 +157,7 @@ export class AuthService {
         }),
       );
       if (!userResponse) {
-        throw new CustomException(
-          HttpStatus.NOT_FOUND,
-          RESPONSE_MESSAGE.NOT_FOUND,
-        );
+        return notFound();
       }
 
       this.logger.debug('get kakao user success', userResponse.data);
@@ -220,14 +215,11 @@ export class AuthService {
           error.response.data.msg,
         );
       }
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
-  async getAppleRefreshToken(code: string) {
+  async getAppleRefreshToken(code: string): Promise<string | CustomException> {
     const header = {
       kid: this.config.get<string>('appleKeyId'),
       alg: 'ES256',
@@ -276,13 +268,10 @@ export class AuthService {
           ),
       );
 
-      return response.data.refresh_token;
+      return response.data.refresh_token as string;
     } catch (error) {
       this.logger.error(error);
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
@@ -312,7 +301,9 @@ export class AuthService {
     return verifiedDecodedToken;
   }
 
-  async createAppleUser(signinDto: SigninDto): Promise<ResponseSigninData> {
+  async createAppleUser(
+    signinDto: SigninDto,
+  ): Promise<ResponseSigninData | CustomException> {
     try {
       const verifiedToken: AppleJwtTokenPayload = await this.verifyAppleIdToken(
         signinDto.idToken,
@@ -325,9 +316,7 @@ export class AuthService {
       let user = await this.usersService.getUserByAppleId(sub);
 
       if (!user) {
-        const refreshToken: string = await this.getAppleRefreshToken(
-          signinDto.code,
-        );
+        const refreshToken = await this.getAppleRefreshToken(signinDto.code);
 
         this.logger.debug('request apple refresh token success');
 
@@ -365,10 +354,7 @@ export class AuthService {
       if (error instanceof jwt.JsonWebTokenError) {
         throw new CustomException(HttpStatus.UNAUTHORIZED, error.message);
       }
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 }

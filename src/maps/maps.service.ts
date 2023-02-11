@@ -1,4 +1,4 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ResponseSmokingAreaData } from './dto/response-map.dto';
 import { HttpService } from '@nestjs/axios';
@@ -9,7 +9,7 @@ import {
   ResponseSmokingAreas,
   ResponseSmokingAreasData,
 } from './dto/response-maps.dto';
-import { RESPONSE_MESSAGE } from 'src/common/objects';
+import { internalServerError, notFound } from 'src/utils/error';
 
 @Injectable()
 export class MapsService {
@@ -24,7 +24,7 @@ export class MapsService {
   async getMapsByLatAndLong(
     lat: number,
     long: number,
-  ): Promise<ResponseSmokingAreasData> {
+  ): Promise<ResponseSmokingAreasData | CustomException> {
     try {
       const areas: ResponseSmokingAreas[] = await this.prisma
         .$queryRaw`SELECT id, latitude, longitude FROM ( SELECT id, latitude, longitude, (6371 * acos(cos(radians( ${lat} ) ) * cos(radians(latitude)) * cos(radians(longitude) - radians(${long})) + sin(radians(${lat})) * sin( radians(latitude)))) AS distance FROM "Map" ) DATA WHERE DATA.distance < 2`;
@@ -37,10 +37,7 @@ export class MapsService {
       return data;
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 
@@ -48,7 +45,7 @@ export class MapsService {
     mapId: number,
     lat: number,
     long: number,
-  ): Promise<ResponseSmokingAreaData> {
+  ): Promise<ResponseSmokingAreaData | CustomException> {
     try {
       const map = await this.prisma.map.findUnique({
         where: {
@@ -58,10 +55,7 @@ export class MapsService {
       });
 
       if (!map) {
-        throw new CustomException(
-          HttpStatus.NOT_FOUND,
-          RESPONSE_MESSAGE.NOT_FOUND,
-        );
+        return notFound();
       }
 
       const defaultImage = this.config.get('DEFAULT_IMAGE');
@@ -83,10 +77,7 @@ export class MapsService {
       return data;
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 }

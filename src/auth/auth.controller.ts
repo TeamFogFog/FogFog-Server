@@ -21,7 +21,6 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { RESPONSE_MESSAGE } from 'src/common/objects';
-import CustomException from 'src/exceptions/custom.exception';
 import { wrapSuccess } from 'src/utils/success';
 import validation from 'src/utils/validation';
 import { AuthService } from './auth.service';
@@ -85,10 +84,14 @@ export class AuthController {
 
     switch (socialType) {
       case 'kakao':
-        data = await this.authService.createKakaoUser(signinDto);
+        data = (await this.authService.createKakaoUser(
+          signinDto,
+        )) as ResponseSigninData;
         break;
       case 'apple':
-        data = await this.authService.createAppleUser(signinDto);
+        data = (await this.authService.createAppleUser(
+          signinDto,
+        )) as ResponseSigninData;
     }
 
     return wrapSuccess(
@@ -113,10 +116,10 @@ export class AuthController {
   async updateToken(@Req() req): Promise<ResponseTokenDto> {
     const { id, refreshToken } = req.user;
 
-    const data: ResponseTokenData = await this.authService.updateToken(
+    const data: ResponseTokenData = (await this.authService.updateToken(
       id,
       refreshToken,
-    );
+    )) as ResponseTokenData;
 
     return wrapSuccess(
       HttpStatus.OK,

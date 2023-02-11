@@ -16,6 +16,13 @@ export const badRequest = () => {
   );
 };
 
+export const unauthorized = () => {
+  return new CustomException(
+    HttpStatus.UNAUTHORIZED,
+    RESPONSE_MESSAGE.UNAUTHORIZED,
+  );
+};
+
 export const forbidden = () => {
   return new CustomException(HttpStatus.FORBIDDEN, RESPONSE_MESSAGE.FORBIDDEN);
 };
