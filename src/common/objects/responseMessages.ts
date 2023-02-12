@@ -21,6 +21,7 @@ export const RESPONSE_MESSAGE: {
   // user
   READ_NICKNAME_SUCCESS: '유저 닉네임 조회 성공',
   UPDATE_NICKNAME_SUCCESS: '유저 닉네임 수정 성공',
+  UPDATE_PREFERRED_MAP_SUCCESS: '유저 선호지도 수정 성공',
 
   // map
   READ_SMOKING_AREAS_SUCCESS: '흡연구역 전체 조회 성공',

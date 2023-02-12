@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma.service';
 import { forbidden, internalServerError, notFound } from 'src/utils/error';
 import { ResponseNicknameData } from './dto/response-nickname.dto';
 import { UpdateNicknameDto } from './dto/update-nickname.dto';
+import { UpdatePreferredMapDto } from './dto/update-preferredMap.dto';
 
 @Injectable()
 export class UsersService {
@@ -134,6 +135,31 @@ export class UsersService {
       return {
         nickname: updatedUser.nickname,
       };
+    } catch (error) {
+      this.logger.error({ error });
+      return internalServerError();
+    }
+  }
+
+  async updatePreferredMapByUserId(
+    userId: number,
+    id: number,
+    updatePreferredMapDto: UpdatePreferredMapDto,
+  ): Promise<void | CustomException> {
+    if (userId !== id) {
+      return forbidden();
+    }
+
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id, isDeleted: false },
+        data: {
+          preferredMap: updatePreferredMapDto.preferredMap,
+        },
+      });
+      if (!updatedUser) {
+        return notFound();
+      }
     } catch (error) {
       this.logger.error({ error });
       return internalServerError();
