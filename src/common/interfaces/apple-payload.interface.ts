@@ -24,3 +24,10 @@ export interface DecodedTokenPayload {
     sub: string;
   };
 }
+
+export interface RequestTokenPayload {
+  client_id: string;
+  client_secret: string;
+  code: string;
+  grant_type: 'authorization_code';
+}

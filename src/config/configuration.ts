@@ -8,4 +8,8 @@ export default () => ({
   kakaoRedirectUrl: process.env.KAKAO_REDIRECT_URL,
   accessTokenSecret: process.env.ACCESS_TOKEN_SECRET,
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
+  appleClientId: process.env.APPLE_CLIENTID,
+  appleTeamId: process.env.APPLE_TEAMID,
+  appleKeyId: process.env.APPLE_KEYID,
+  appleKeyFilePath: process.env.APPLE_KEYFILE_PATH,
 });

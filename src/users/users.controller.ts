@@ -64,7 +64,10 @@ export class UsersController {
     @Param() { id }: ReadNicknameParams,
   ): Promise<ResponseNicknameDto> {
     const data: ResponseNicknameData =
-      await this.usersService.getNicknameByUserId(req.user?.id, id);
+      (await this.usersService.getNicknameByUserId(
+        req.user?.id,
+        id,
+      )) as ResponseNicknameData;
 
     return wrapSuccess(
       HttpStatus.OK,
@@ -91,11 +94,11 @@ export class UsersController {
     @Body() updateNicknameDto: UpdateNicknameDto,
   ): Promise<ResponseNicknameDto> {
     const data: ResponseNicknameData =
-      await this.usersService.updateNicknameByUserId(
+      (await this.usersService.updateNicknameByUserId(
         req.user?.id,
         id,
         updateNicknameDto,
-      );
+      )) as ResponseNicknameData;
 
     return wrapSuccess(
       HttpStatus.OK,

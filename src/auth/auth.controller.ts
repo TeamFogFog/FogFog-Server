@@ -21,8 +21,8 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { RESPONSE_MESSAGE } from 'src/common/objects';
-import CustomException from 'src/exceptions/custom.exception';
 import { wrapSuccess } from 'src/utils/success';
+import validation from 'src/utils/validation';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
 import {
@@ -77,23 +77,21 @@ export class AuthController {
     description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
   async signin(@Body() signinDto: SigninDto): Promise<ResponseSigninDto> {
-    const { socialType, kakaoAccessToken, idToken } = signinDto;
+    await validation.validationSignin(signinDto);
 
-    if ((kakaoAccessToken && idToken) || (!kakaoAccessToken && !idToken)) {
-      throw new CustomException(
-        HttpStatus.BAD_REQUEST,
-        RESPONSE_MESSAGE.BAD_REQUEST,
-      );
-    }
-
+    const { socialType } = signinDto;
     let data: ResponseSigninData;
 
     switch (socialType) {
       case 'kakao':
-        data = await this.authService.createKakaoUser(signinDto);
+        data = (await this.authService.createKakaoUser(
+          signinDto,
+        )) as ResponseSigninData;
         break;
       case 'apple':
-        data = await this.authService.createAppleUser(signinDto);
+        data = (await this.authService.createAppleUser(
+          signinDto,
+        )) as ResponseSigninData;
     }
 
     return wrapSuccess(
@@ -118,10 +116,10 @@ export class AuthController {
   async updateToken(@Req() req): Promise<ResponseTokenDto> {
     const { id, refreshToken } = req.user;
 
-    const data: ResponseTokenData = await this.authService.updateToken(
+    const data: ResponseTokenData = (await this.authService.updateToken(
       id,
       refreshToken,
-    );
+    )) as ResponseTokenData;
 
     return wrapSuccess(
       HttpStatus.OK,
