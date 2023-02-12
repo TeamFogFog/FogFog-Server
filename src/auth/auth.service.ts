@@ -79,12 +79,9 @@ export class AuthService {
     hashedRefreshToken: string,
   ): Promise<ResponseTokenData | CustomException> {
     try {
-      const user = await this.usersService.getUserById(id);
+      const user = <User>await this.usersService.getUserById(id);
       if (!user || !user.refreshToken) {
-        throw new CustomException(
-          HttpStatus.FORBIDDEN,
-          RESPONSE_MESSAGE.FORBIDDEN,
-        );
+        return forbidden();
       }
 
       const isRefreshTokenMatch: boolean = await argon2.verify(
@@ -166,7 +163,7 @@ export class AuthService {
       const { profile, email, age_range, has_gender, gender } =
         userResponse.data?.kakao_account;
 
-      let user = await this.usersService.getUserByKaKaoId(id);
+      let user = <User>await this.usersService.getUserByKaKaoId(id);
 
       if (!user) {
         let convertGenderType: number | undefined;
@@ -190,7 +187,7 @@ export class AuthService {
           sex: convertGenderType,
         };
 
-        user = await this.usersService.createUser(newUser);
+        user = <User>await this.usersService.createUser(newUser);
       }
 
       const tokens: JwtToken = await this.getJwtToken(user);
@@ -313,7 +310,7 @@ export class AuthService {
 
       const { sub, email } = verifiedToken;
 
-      let user = await this.usersService.getUserByAppleId(sub);
+      let user = <User>await this.usersService.getUserByAppleId(sub);
 
       if (!user) {
         const refreshToken = await this.getAppleRefreshToken(signinDto.code);
@@ -332,10 +329,10 @@ export class AuthService {
           appleRefreshToken: refreshToken,
         };
 
-        user = await this.usersService.createUser(newUser);
+        user = <User>await this.usersService.createUser(newUser);
       }
 
-      const tokens: JwtToken = await this.getJwtToken(user);
+      const tokens: JwtToken = <JwtToken>await this.getJwtToken(user);
       const hashedRefreshToken: string = await this.getHashedRefreshToken(
         tokens.refreshToken,
       );
