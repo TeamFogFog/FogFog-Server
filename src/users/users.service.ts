@@ -145,12 +145,9 @@ export class UsersService {
     userId: number,
     id: number,
     updatePreferredMapDto: UpdatePreferredMapDto,
-  ): Promise<void> {
+  ): Promise<void | CustomException> {
     if (userId !== id) {
-      throw new CustomException(
-        HttpStatus.FORBIDDEN,
-        RESPONSE_MESSAGE.FORBIDDEN,
-      );
+      return forbidden();
     }
 
     try {
@@ -161,17 +158,11 @@ export class UsersService {
         },
       });
       if (!updatedUser) {
-        throw new CustomException(
-          HttpStatus.NOT_FOUND,
-          RESPONSE_MESSAGE.NOT_FOUND,
-        );
+        return notFound();
       }
     } catch (error) {
       this.logger.error({ error });
-      throw new CustomException(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-      );
+      return internalServerError();
     }
   }
 }

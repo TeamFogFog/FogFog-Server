@@ -58,7 +58,7 @@ export class MapsService {
         return notFound();
       }
 
-      const defaultImage = this.config.get('DEFAULT_IMAGE');
+      const defaultImage = this.config.get('defaultImage');
 
       const { latitude: destinationLatitude, longitude: destinationLongitude } =
         map;
