@@ -51,6 +51,10 @@ jobs:
           echo KAKAO_REDIRECT_URL=${{ secrets.KAKAO_REDIRECT_URL }} >> .env
           echo ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }} >> .env
           echo REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }} >> .env
+          echo DEFAULT_IMAGE=${{ secrets.DEFAULT_IMAGE }} >> .env
+          echo APPLE_CLIENTID=${{ secrets.APPLE_CLIENTID }} >> .env
+          echo APPLE_TEAMID=${{ secrets.APPLE_TEAMID }} >> .env
+          echo APPLE_KEYFILE_PATH=${{ secrets.APPLE_KEYFILE_PATH }} >> .env
           cat .env
 
       - name: Create apple .p8
