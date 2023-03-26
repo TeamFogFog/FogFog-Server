@@ -1,8 +1,9 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Head, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom, catchError, ObservableInput } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from 'src/prisma.service';
 import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { AxiosError } from 'axios';
@@ -40,6 +41,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly http: HttpService,
     private readonly usersService: UsersService,
+    private prisma: PrismaService,
   ) {}
 
   private readonly logger = new Logger(AuthService.name);
@@ -351,6 +353,52 @@ export class AuthService {
       if (error instanceof jwt.JsonWebTokenError) {
         throw new CustomException(HttpStatus.UNAUTHORIZED, error.message);
       }
+      return internalServerError();
+    }
+  }
+
+  async deleteUserByUserId(
+    userId: number,
+    id: number,
+    accessToken: string,
+  ): Promise<void | CustomException> {
+    if (userId !== id) {
+      return forbidden();
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        socialType: true,
+      },
+    });
+
+    const socialType = user.socialType;
+
+    const kakaoUnlinkUserUrl = `https://kapi.kakao.com/v1/user/unlink`;
+    const kakaoRequestHeader = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+
+    try {
+      switch (socialType) {
+        case 1:
+          const unlinkResponse = await firstValueFrom(
+            this.http.post(kakaoUnlinkUserUrl, { headers: kakaoRequestHeader }),
+          );
+          const id: number = unlinkResponse.data.id;
+          await this.prisma.user.delete({
+            where: { id },
+          });
+        case 2:
+          
+      }
+    } catch (error) {
+      this.logger.error({ error });
       return internalServerError();
     }
   }

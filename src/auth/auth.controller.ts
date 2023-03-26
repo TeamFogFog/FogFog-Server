@@ -4,9 +4,12 @@ import {
   Get,
   HttpStatus,
   Post,
+  Patch,
   Query,
   Req,
   UseGuards,
+  Param,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,7 +22,9 @@ import {
   ApiForbiddenResponse,
   ApiBearerAuth,
   ApiBadRequestResponse,
+  ApiParam,
 } from '@nestjs/swagger';
+import { ResponseSuccessDto } from 'src/common/dto/response-success.dto';
 import { RESPONSE_MESSAGE } from 'src/common/objects';
 import { wrapSuccess } from 'src/utils/success';
 import validation from 'src/utils/validation';
@@ -32,6 +37,7 @@ import {
 import { ResponseTokenData, ResponseTokenDto } from './dto/response-token.dto';
 import { SigninDto } from './dto/signin.dto';
 import { RefreshTokenGuard } from './guards';
+import { DeleteUserParams } from './dto/delete-user.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -126,5 +132,26 @@ export class AuthController {
       RESPONSE_MESSAGE.REISSUED_TOKEN_SUCCESS,
       data,
     );
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: '회원 탈퇴 API',
+    description: '회원 탈퇴',
+  })
+  @ApiParam({
+    type: Number,
+    name: 'id',
+    required: true,
+    description: 'user id',
+  })
+  @ApiOkResponse({type: ResponseSuccessDto})
+  async updateUser(
+    @Req() req,
+    @Param() { id }: DeleteUserParams,
+  ): Promise<ResponseSuccessDto> {
+    const accessToken = req.user;
+    await this.authService.deleteUserByUserId(req.user?.id, id, accessToken);
+    return wrapSuccess(HttpStatus.OK, RESPONSE_MESSAGE.SIGNOUT_USER_SUCCESS);
   }
 }
