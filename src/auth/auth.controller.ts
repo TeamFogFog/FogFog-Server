@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { RESPONSE_MESSAGE } from 'src/common/objects';
 import { wrapSuccess } from 'src/utils/success';
-import validation from 'src/utils/validation';
+import { validationSignin } from 'src/utils/validation';
 import { AuthService } from './auth.service';
 import { ResponseCallbackDto } from './dto/response-callback.dto';
 import {
@@ -77,7 +77,7 @@ export class AuthController {
     description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
   async signin(@Body() signinDto: SigninDto): Promise<ResponseSigninDto> {
-    await validation.validationSignin(signinDto);
+    await validationSignin(signinDto);
 
     const { socialType } = signinDto;
     let data: ResponseSigninData;
