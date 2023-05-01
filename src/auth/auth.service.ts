@@ -24,7 +24,7 @@ import {
 import * as jwt from 'jsonwebtoken';
 import JwksRsa, { JwksClient } from 'jwks-rsa';
 import * as fs from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import * as qs from 'qs';
 import {
   forbidden,
@@ -232,10 +232,7 @@ export class AuthService {
 
     const privateKey: string = fs
       .readFileSync(
-        join(
-          process.cwd(),
-          `../${this.config.get<string>('appleKeyFilePath')}`,
-        ),
+        resolve(__dirname, `../${this.config.get<string>('appleKeyFilePath')}`),
       )
       .toString();
 
