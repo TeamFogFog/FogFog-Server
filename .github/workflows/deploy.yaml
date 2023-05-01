@@ -57,12 +57,6 @@ jobs:
           echo APPLE_KEYFILE_PATH=${{ secrets.APPLE_KEYFILE_PATH }} >> .env
           cat .env
 
-      - name: Create apple .p8
-        run: |
-          cd src
-          touch ${{ secrets.APPLE_KEYFILE_PATH }}
-          echo "${{ secrets.APPLE_PRIVATE_KEY }}" > ${{ secrets.APPLE_KEYFILE_PATH }}
-
       # Initialize Node.js
       - name: Install Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
@@ -74,6 +68,13 @@ jobs:
         run: yarn
       - name: Run build
         run: yarn build
+
+      # Create apple .p8 file
+      - name: Create apple .p8
+        run: |
+          cd dist
+          touch ${{ secrets.APPLE_KEYFILE_PATH }}
+          echo "${{ secrets.APPLE_PRIVATE_KEY }}" > ${{ secrets.APPLE_KEYFILE_PATH }}
 
       # Install AWS CLI 2
       - name: Install AWS CLI 2
