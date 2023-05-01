@@ -9,7 +9,7 @@ on:
 jobs:
   buildAndTest:
     name: CI Pipeline
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       # Node version
       matrix:
