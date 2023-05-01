@@ -55,6 +55,7 @@ jobs:
           echo APPLE_CLIENTID=${{ secrets.APPLE_CLIENTID }} >> .env
           echo APPLE_TEAMID=${{ secrets.APPLE_TEAMID }} >> .env
           echo APPLE_KEYFILE_PATH=${{ secrets.APPLE_KEYFILE_PATH }} >> .env
+          echo APPLE_KEYID=${{ secrets.APPLE_KEYID }} >> .env
           cat .env
 
       # Initialize Node.js
