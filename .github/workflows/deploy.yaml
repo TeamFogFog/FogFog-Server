@@ -40,22 +40,8 @@ jobs:
     needs: buildAndTest
     steps:
       - uses: actions/checkout@v2
-
-      # Initialize Node.js
-      - name: Install Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      # Install project dependencies and build
-      - name: Install dependencies
-        run: yarn
-      - name: Run build
-        run: yarn build
-
       - name: Create env
         run: |
-          cd dist
           touch .env
           echo PORT=8081 >> .env
           echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env
@@ -71,6 +57,18 @@ jobs:
           echo APPLE_KEYFILE_PATH=${{ secrets.APPLE_KEYFILE_PATH }} >> .env
           echo APPLE_KEYID=${{ secrets.APPLE_KEYID }} >> .env
           cat .env
+
+      # Initialize Node.js
+      - name: Install Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # Install project dependencies and build
+      - name: Install dependencies
+        run: yarn
+      - name: Run build
+        run: yarn build
 
       # Create apple .p8 file
       - name: Create apple .p8
