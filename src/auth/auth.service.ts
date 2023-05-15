@@ -230,6 +230,12 @@ export class AuthService {
       sub: this.config.get<string>('appleClientId'),
     };
 
+    this.logger.debug('apple refresh token header', header);
+    this.logger.debug(
+      'apple refresh token payload',
+      JSON.stringify(payload, null, '\t'),
+    );
+
     const privateKey: string = fs
       .readFileSync(
         resolve(__dirname, `../${this.config.get<string>('appleKeyFilePath')}`),
@@ -308,11 +314,14 @@ export class AuthService {
       const { sub, email } = verifiedToken;
 
       let user = <User>await this.usersService.getUserByAppleId(sub);
-
+      this.logger.debug(
+        'get user by apple id',
+        JSON.stringify(user, null, '\t'),
+      );
       if (!user) {
         const refreshToken = await this.getAppleRefreshToken(signinDto.code);
 
-        this.logger.debug('request apple refresh token success');
+        this.logger.debug('request apple refresh token success', refreshToken);
 
         let convertSocialType: number = convertObjectKey(
           SOCIAL_TYPE,
@@ -325,6 +334,11 @@ export class AuthService {
           email: email ?? undefined,
           appleRefreshToken: refreshToken,
         };
+
+        this.logger.debug(
+          'create apple user',
+          JSON.stringify(newUser, null, '\t'),
+        );
 
         user = <User>await this.usersService.createUser(newUser);
       }
