@@ -42,7 +42,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Create env
         run: |
-          cd dist
           touch .env
           echo PORT=8081 >> .env
           echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env
