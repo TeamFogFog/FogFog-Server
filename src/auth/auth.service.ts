@@ -247,12 +247,19 @@ export class AuthService {
         header,
       });
 
+      this.logger.debug('apple client secret', clientSecret);
+
       const data: RequestTokenPayload = {
         client_id: this.config.get<string>('appleClientId'),
         client_secret: clientSecret,
         grant_type: 'authorization_code',
         code,
       };
+
+      this.logger.debug(
+        'request token payload data',
+        JSON.stringify(data, null, '\t'),
+      );
 
       const response = await firstValueFrom(
         this.http
