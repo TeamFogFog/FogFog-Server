@@ -9,7 +9,7 @@ on:
 jobs:
   buildAndTest:
     name: CI Pipeline
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       # Node version
       matrix:
@@ -32,7 +32,7 @@ jobs:
 
   deploy:
     name: CD Pipline
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -55,13 +55,8 @@ jobs:
           echo APPLE_CLIENTID=${{ secrets.APPLE_CLIENTID }} >> .env
           echo APPLE_TEAMID=${{ secrets.APPLE_TEAMID }} >> .env
           echo APPLE_KEYFILE_PATH=${{ secrets.APPLE_KEYFILE_PATH }} >> .env
+          echo APPLE_KEYID=${{ secrets.APPLE_KEYID }} >> .env
           cat .env
-
-      - name: Create apple .p8
-        run: |
-          cd src
-          touch ${{ secrets.APPLE_KEYFILE_PATH }}
-          echo "${{ secrets.APPLE_PRIVATE_KEY }}" > ${{ secrets.APPLE_KEYFILE_PATH }}
 
       # Initialize Node.js
       - name: Install Node.js ${{ matrix.node-version }}
@@ -74,6 +69,13 @@ jobs:
         run: yarn
       - name: Run build
         run: yarn build
+
+      # Create apple .p8 file
+      - name: Create apple .p8
+        run: |
+          cd dist
+          touch ${{ secrets.APPLE_KEYFILE_PATH }}
+          echo "${{ secrets.APPLE_PRIVATE_KEY }}" > ${{ secrets.APPLE_KEYFILE_PATH }}
 
       # Install AWS CLI 2
       - name: Install AWS CLI 2

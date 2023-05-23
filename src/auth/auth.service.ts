@@ -1,9 +1,5 @@
 import { Head, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import {
-  firstValueFrom,
-  catchError,
-  ObservableInput,
-} from 'rxjs';
+import { firstValueFrom, catchError, ObservableInput } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -25,12 +21,11 @@ import {
   AppleJwtTokenPayload,
   DecodedTokenPayload,
   RequestTokenPayload,
-  RevokePayload,
 } from 'src/common/interfaces/apple-payload.interface';
 import * as jwt from 'jsonwebtoken';
 import JwksRsa, { JwksClient } from 'jwks-rsa';
 import * as fs from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import * as qs from 'qs';
 import {
   forbidden,
@@ -237,12 +232,15 @@ export class AuthService {
       sub: this.config.get<string>('appleClientId'),
     };
 
+    this.logger.debug('apple refresh token header', header);
+    this.logger.debug(
+      'apple refresh token payload',
+      JSON.stringify(payload, null, '\t'),
+    );
+
     const privateKey: string = fs
       .readFileSync(
-        join(
-          process.cwd(),
-          `../${this.config.get<string>('appleKeyFilePath')}`,
-        ),
+        resolve(__dirname, `../${this.config.get<string>('appleKeyFilePath')}`),
       )
       .toString();
 
@@ -251,12 +249,19 @@ export class AuthService {
         header,
       });
 
+      this.logger.debug('apple client secret', clientSecret);
+
       const data: RequestTokenPayload = {
         client_id: this.config.get<string>('appleClientId'),
         client_secret: clientSecret,
         grant_type: 'authorization_code',
         code,
       };
+
+      this.logger.debug(
+        'request token payload data',
+        JSON.stringify(data, null, '\t'),
+      );
 
       const response = await firstValueFrom(
         this.http
@@ -318,11 +323,14 @@ export class AuthService {
       const { sub, email } = verifiedToken;
 
       let user = <User>await this.usersService.getUserByAppleId(sub);
-
+      this.logger.debug(
+        'get user by apple id',
+        JSON.stringify(user, null, '\t'),
+      );
       if (!user) {
         const refreshToken = await this.getAppleRefreshToken(signinDto.code);
 
-        this.logger.debug('request apple refresh token success');
+        this.logger.debug('request apple refresh token success', refreshToken);
 
         let convertSocialType: number = convertObjectKey(
           SOCIAL_TYPE,
@@ -335,6 +343,11 @@ export class AuthService {
           email: email ?? undefined,
           appleRefreshToken: refreshToken,
         };
+
+        this.logger.debug(
+          'create apple user',
+          JSON.stringify(newUser, null, '\t'),
+        );
 
         user = <User>await this.usersService.createUser(newUser);
       }

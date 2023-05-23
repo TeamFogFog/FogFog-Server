@@ -2,7 +2,7 @@ import { SigninDto } from 'src/auth/dto/signin.dto';
 import { CustomException } from 'src/exceptions';
 import { badRequest } from './error';
 
-const validationSignin = async (
+export const validationSignin = async (
   createSigninDto: SigninDto,
 ): Promise<CustomException> => {
   const { socialType, kakaoAccessToken, idToken, code } = createSigninDto;
@@ -24,8 +24,4 @@ const validationSignin = async (
       return badRequest();
     }
   }
-};
-
-export = {
-  validationSignin,
 };
