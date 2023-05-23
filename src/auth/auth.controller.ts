@@ -146,7 +146,7 @@ export class AuthController {
     description: 'user id',
   })
   @ApiOkResponse({ type: ResponseSuccessDto })
-  async updateUser(
+  async deleteUser(
     @Req() req,
     @Param() { id }: DeleteUserParams,
   ): Promise<ResponseSuccessDto> {
