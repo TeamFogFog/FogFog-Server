@@ -6,6 +6,7 @@ export default () => ({
   sentryDsn: process.env.SENTRY_DSN,
   kakaoClientId: process.env.KAKAO_CLIENT_ID,
   kakaoRedirectUrl: process.env.KAKAO_REDIRECT_URL,
+  kakaoAdminKey: process.env.KAKAO_ADMIN_KEY,
   accessTokenSecret: process.env.ACCESS_TOKEN_SECRET,
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
   defaultImage: process.env.DEFAULT_IMAGE,

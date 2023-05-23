@@ -83,7 +83,7 @@ export class AuthController {
     description: 'Unauthorized - 소셜 로그인 토큰이 없거나 유효하지 않은 경우',
   })
   async signin(@Body() signinDto: SigninDto): Promise<ResponseSigninDto> {
-    await validation.validationSignin(signinDto);
+    // await validation.validationSignin(signinDto);
 
     const { socialType } = signinDto;
     let data: ResponseSigninData;
@@ -145,13 +145,12 @@ export class AuthController {
     required: true,
     description: 'user id',
   })
-  @ApiOkResponse({type: ResponseSuccessDto})
+  @ApiOkResponse({ type: ResponseSuccessDto })
   async updateUser(
     @Req() req,
     @Param() { id }: DeleteUserParams,
   ): Promise<ResponseSuccessDto> {
-    const accessToken = req.user;
-    await this.authService.deleteUserByUserId(req.user?.id, id, accessToken);
+    await this.authService.deleteUserByUserId(req.user?.id, id);
     return wrapSuccess(HttpStatus.OK, RESPONSE_MESSAGE.SIGNOUT_USER_SUCCESS);
   }
 }

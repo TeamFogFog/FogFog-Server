@@ -1,12 +1,16 @@
 import { Head, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { firstValueFrom, catchError, ObservableInput } from 'rxjs';
+import {
+  firstValueFrom,
+  catchError,
+  ObservableInput,
+} from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma.service';
 import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosRequestConfig } from 'axios';
 import { UsersService } from 'src/users/users.service';
 import { ResponseCallbackData } from './dto/response-callback.dto';
 import { SigninDto } from './dto/signin.dto';
@@ -21,6 +25,7 @@ import {
   AppleJwtTokenPayload,
   DecodedTokenPayload,
   RequestTokenPayload,
+  RevokePayload,
 } from 'src/common/interfaces/apple-payload.interface';
 import * as jwt from 'jsonwebtoken';
 import JwksRsa, { JwksClient } from 'jwks-rsa';
@@ -360,7 +365,6 @@ export class AuthService {
   async deleteUserByUserId(
     userId: number,
     id: number,
-    accessToken: string,
   ): Promise<void | CustomException> {
     if (userId !== id) {
       return forbidden();
@@ -371,35 +375,56 @@ export class AuthService {
         id,
         isDeleted: false,
       },
-      select: {
-        socialType: true,
-      },
     });
+    if (!user) {
+      return notFound();
+    }
 
     const socialType = user.socialType;
 
-    const kakaoUnlinkUserUrl = `https://kapi.kakao.com/v1/user/unlink`;
-    const kakaoRequestHeader = {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    };
+    switch (socialType) {
+      case 1:
+        const targetId = Number(user.kakaoId);
+        const kakaoUnlinkUrl = `https://kapi.kakao.com/v1/user/unlink`;
+        const appAdminKey = this.config.get<string>('kakaoAdminKey');
+        const kakaoRequestHeader = {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `KakaoAK ${appAdminKey}`,
+        };
+        const kakaoRequestParams = {
+          target_id_type: 'user_id',
+          target_id: targetId,
+        };
+        const kakaoRequestConfig: AxiosRequestConfig = {
+          headers: kakaoRequestHeader,
+          params: kakaoRequestParams,
+        };
 
-    try {
-      switch (socialType) {
-        case 1:
+        try {
           const unlinkResponse = await firstValueFrom(
-            this.http.post(kakaoUnlinkUserUrl, { headers: kakaoRequestHeader }),
+            this.http.post(kakaoUnlinkUrl, null, kakaoRequestConfig).pipe(
+              catchError((error: AxiosError) => {
+                this.logger.error(error.response.data);
+                throw new CustomException(
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                  RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+                );
+              }),
+            ),
           );
-          const id: number = unlinkResponse.data.id;
-          await this.prisma.user.delete({
-            where: { id },
+          const unlinkedkakaoId = unlinkResponse.data.id;
+          await this.prisma.user.update({
+            where: { id, kakaoId: unlinkedkakaoId },
+            data: {
+              isDeleted: true,
+              refreshToken: null,
+              kakaoId: null,
+            },
           });
-        case 2:
-          
-      }
-    } catch (error) {
-      this.logger.error({ error });
-      return internalServerError();
+        } catch (error) {
+          this.logger.error({ error });
+          return internalServerError();
+        }
     }
   }
 }
