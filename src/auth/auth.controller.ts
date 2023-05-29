@@ -151,6 +151,9 @@ export class AuthController {
     @Param() { id }: DeleteUserParams,
   ): Promise<ResponseSuccessDto> {
     await this.authService.deleteUserByUserId(req.user?.id, id);
-    return wrapSuccess(HttpStatus.OK, RESPONSE_MESSAGE.SIGNOUT_USER_SUCCESS);
+    return wrapSuccess(
+      HttpStatus.NO_CONTENT,
+      RESPONSE_MESSAGE.DELETE_USER_SUCCESS,
+    );
   }
 }

@@ -17,7 +17,7 @@ export const RESPONSE_MESSAGE: {
   SIGNIN_USER_SUCCESS: '로그인/회원가입 성공',
   ISSUED_TOKEN_SUCCESS: '토큰 발급 성공',
   REISSUED_TOKEN_SUCCESS: '토큰 재발급 성공',
-  SIGNOUT_USER_SUCCESS: '회원탈퇴 성공',
+  DELETE_USER_SUCCESS: '회원탈퇴 성공',
 
   // user
   READ_NICKNAME_SUCCESS: '유저 닉네임 조회 성공',
