@@ -393,10 +393,8 @@ export class AuthService {
       return notFound();
     }
 
-    const socialType = user.socialType;
-
-    switch (socialType) {
-      case 1:
+    switch (SOCIAL_TYPE[user.socialType]) {
+      case 'kakao':
         const targetId = Number(user.kakaoId);
         const kakaoUnlinkUrl = `https://kapi.kakao.com/v1/user/unlink`;
         const appAdminKey = this.config.get<string>('kakaoAdminKey');
