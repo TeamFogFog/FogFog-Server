@@ -258,35 +258,7 @@ export class AuthService {
   }
 
   async getAppleRefreshToken(code: string): Promise<string | CustomException> {
-    // const header = {
-    //   kid: this.config.get<string>('appleKeyId'),
-    //   alg: 'ES256',
-    // };
-
-    // const payload = {
-    //   iss: this.config.get<string>('appleTeamId'),
-    //   iat: Math.floor(Date.now() / 1000),
-    //   exp: Math.floor(Date.now() / 1000) + 15777000,
-    //   aud: 'https://appleid.apple.com',
-    //   sub: this.config.get<string>('appleClientId'),
-    // };
-
-    // this.logger.debug('apple refresh token header', header);
-    // this.logger.debug(
-    //   'apple refresh token payload',
-    //   JSON.stringify(payload, null, '\t'),
-    // );
-
-    // const privateKey: string = fs
-    //   .readFileSync(
-    //     resolve(__dirname, `../${this.config.get<string>('appleKeyFilePath')}`),
-    //   )
-    //   .toString();
-
     try {
-      // const clientSecret = jwt.sign(payload, privateKey, {
-      //   header,
-      // });
       const clientSecret = (await this.getAppleClientSecret()) as string;
 
       this.logger.debug('apple client secret', clientSecret);
