@@ -1,11 +1,12 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Head, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom, catchError, ObservableInput } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from 'src/prisma.service';
 import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosRequestConfig } from 'axios';
 import { UsersService } from 'src/users/users.service';
 import { ResponseCallbackData } from './dto/response-callback.dto';
 import { SigninDto } from './dto/signin.dto';
@@ -40,6 +41,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly http: HttpService,
     private readonly usersService: UsersService,
+    private prisma: PrismaService,
   ) {}
 
   private readonly logger = new Logger(AuthService.name);
@@ -157,8 +159,6 @@ export class AuthService {
         return notFound();
       }
 
-      this.logger.debug('get kakao user success', userResponse.data);
-
       const { id } = userResponse.data;
       const { profile, email, age_range, has_gender, gender } =
         userResponse.data?.kakao_account;
@@ -216,7 +216,7 @@ export class AuthService {
     }
   }
 
-  async getAppleRefreshToken(code: string): Promise<string | CustomException> {
+  async getAppleClientSecret(): Promise<string | CustomException> {
     const header = {
       kid: this.config.get<string>('appleKeyId'),
       alg: 'ES256',
@@ -230,12 +230,6 @@ export class AuthService {
       sub: this.config.get<string>('appleClientId'),
     };
 
-    this.logger.debug('apple refresh token header', header);
-    this.logger.debug(
-      'apple refresh token payload',
-      JSON.stringify(payload, null, '\t'),
-    );
-
     const privateKey: string = fs
       .readFileSync(
         resolve(__dirname, `../${this.config.get<string>('appleKeyFilePath')}`),
@@ -246,8 +240,16 @@ export class AuthService {
       const clientSecret = jwt.sign(payload, privateKey, {
         header,
       });
+      return clientSecret;
+    } catch (error) {
+      this.logger.error(error);
+      return internalServerError();
+    }
+  }
 
-      this.logger.debug('apple client secret', clientSecret);
+  async getAppleRefreshToken(code: string): Promise<string | CustomException> {
+    try {
+      const clientSecret = (await this.getAppleClientSecret()) as string;
 
       const data: RequestTokenPayload = {
         client_id: this.config.get<string>('appleClientId'),
@@ -255,11 +257,6 @@ export class AuthService {
         grant_type: 'authorization_code',
         code,
       };
-
-      this.logger.debug(
-        'request token payload data',
-        JSON.stringify(data, null, '\t'),
-      );
 
       const response = await firstValueFrom(
         this.http
@@ -316,19 +313,11 @@ export class AuthService {
         signinDto.idToken,
       );
 
-      this.logger.debug('verify apple id token success');
-
       const { sub, email } = verifiedToken;
 
       let user = <User>await this.usersService.getUserByAppleId(sub);
-      this.logger.debug(
-        'get user by apple id',
-        JSON.stringify(user, null, '\t'),
-      );
       if (!user) {
         const refreshToken = await this.getAppleRefreshToken(signinDto.code);
-
-        this.logger.debug('request apple refresh token success', refreshToken);
 
         let convertSocialType: number = convertObjectKey(
           SOCIAL_TYPE,
@@ -341,11 +330,6 @@ export class AuthService {
           email: email ?? undefined,
           appleRefreshToken: refreshToken,
         };
-
-        this.logger.debug(
-          'create apple user',
-          JSON.stringify(newUser, null, '\t'),
-        );
 
         user = <User>await this.usersService.createUser(newUser);
       }
@@ -370,6 +354,102 @@ export class AuthService {
         throw new CustomException(HttpStatus.UNAUTHORIZED, error.message);
       }
       return internalServerError();
+    }
+  }
+
+  async deleteUserByUserId(
+    userId: number,
+    id: number,
+  ): Promise<void | CustomException> {
+    if (userId !== id) {
+      return forbidden();
+    }
+
+    const user = (await this.usersService.getUserById(id)) as User;
+    if (!user) {
+      return notFound();
+    }
+
+    switch (SOCIAL_TYPE[user.socialType]) {
+      case 'kakao':
+        const targetId = Number(user.kakaoId);
+        const kakaoUnlinkUrl = `https://kapi.kakao.com/v1/user/unlink`;
+        const appAdminKey = this.config.get<string>('kakaoAdminKey');
+        const kakaoRequestHeader = {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `KakaoAK ${appAdminKey}`,
+        };
+        const kakaoRequestParams = {
+          target_id_type: 'user_id',
+          target_id: targetId,
+        };
+        const kakaoRequestConfig: AxiosRequestConfig = {
+          headers: kakaoRequestHeader,
+          params: kakaoRequestParams,
+        };
+
+        try {
+          const unlinkResponse = await firstValueFrom(
+            this.http.post(kakaoUnlinkUrl, null, kakaoRequestConfig).pipe(
+              catchError((error: AxiosError) => {
+                this.logger.error(error.response.data);
+                throw new CustomException(
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                  RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+                );
+              }),
+            ),
+          );
+          const unlinkedkakaoId = unlinkResponse.data.id;
+          await this.prisma.user.update({
+            where: { id, kakaoId: unlinkedkakaoId },
+            data: {
+              isDeleted: true,
+              refreshToken: null,
+              kakaoId: null,
+            },
+          });
+        } catch (error) {
+          this.logger.error({ error });
+          return internalServerError();
+        }
+      case 'apple':
+        const appleRevokeUrl = 'https://appleid.apple.com/auth/revoke';
+        const clientSecret = (await this.getAppleClientSecret()) as string;
+
+        const data = {
+          client_id: this.config.get<string>('appleClientId'),
+          client_secret: clientSecret,
+          token: user.appleRefreshToken,
+          token_type_hint: 'refresh_token',
+        };
+
+        try {
+          await firstValueFrom(
+            this.http.post(appleRevokeUrl, qs.stringify(data)).pipe(
+              catchError((error: AxiosError) => {
+                this.logger.error(error.response.data);
+                throw new CustomException(
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                  RESPONSE_MESSAGE.internalServerError,
+                );
+              }),
+            ),
+          );
+
+          await this.prisma.user.update({
+            where: { id },
+            data: {
+              isDeleted: true,
+              refreshToken: null,
+              appleId: null,
+              appleRefreshToken: null,
+            },
+          });
+        } catch (error) {
+          this.logger.error({ error });
+          return internalServerError();
+        }
     }
   }
 }

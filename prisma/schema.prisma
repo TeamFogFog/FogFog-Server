@@ -25,7 +25,7 @@ model User {
   appleId      String?  @map("apple_id") @db.VarChar()
   appleRefreshToken String? @map("apple_refresh_token") @db.VarChar()
   createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @map("updated_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
   isDeleted    Boolean  @default(false) @map("is_deleted")
 }
 
@@ -38,6 +38,6 @@ model Map {
   areaType  Int?     @map("area_type") @db.SmallInt
   areaName  String   @map("area_name") @db.VarChar()
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
   isDeleted Boolean  @default(false) @map("is_deleted")
 }
