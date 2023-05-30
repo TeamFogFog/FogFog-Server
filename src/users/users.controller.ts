@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -88,17 +89,18 @@ export class UsersController {
     description: 'user id',
   })
   @ApiOkResponse({ type: ResponseNicknameDto })
+  @ApiConflictResponse({ description: '중복된 닉네임일 경우' })
   async updateNickname(
     @Req() req,
     @Param() { id }: UpdateNicknameParams,
     @Body() updateNicknameDto: UpdateNicknameDto,
   ): Promise<ResponseNicknameDto> {
     const data: ResponseNicknameData =
-      (await this.usersService.updateNicknameByUserId(
+      await this.usersService.updateNicknameByUserId(
         req.user?.id,
         id,
         updateNicknameDto,
-      )) as ResponseNicknameData;
+      );
 
     return wrapSuccess(
       HttpStatus.OK,

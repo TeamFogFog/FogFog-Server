@@ -2,7 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { User } from '@prisma/client';
 import CustomException from 'src/exceptions/custom.exception';
 import { PrismaService } from 'src/prisma.service';
-import { forbidden, internalServerError, notFound } from 'src/utils/error';
+import {
+  conflict,
+  forbidden,
+  internalServerError,
+  notFound,
+} from 'src/utils/error';
 import { ResponseNicknameData } from './dto/response-nickname.dto';
 import { UpdateNicknameDto } from './dto/update-nickname.dto';
 import { UpdatePreferredMapDto } from './dto/update-preferredMap.dto';
@@ -68,6 +73,21 @@ export class UsersService {
     }
   }
 
+  async getUserByNickname(nickname: string): Promise<User> {
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: {
+          nickname,
+          isDeleted: false,
+        },
+      });
+      return user;
+    } catch (error) {
+      this.logger.error({ error });
+      throw internalServerError();
+    }
+  }
+
   async getNicknameByUserId(
     userId: number,
     id: number,
@@ -116,9 +136,15 @@ export class UsersService {
     userId: number,
     id: number,
     updateNicknameDto: UpdateNicknameDto,
-  ): Promise<ResponseNicknameData | CustomException> {
+  ): Promise<ResponseNicknameData> {
     if (userId !== id) {
-      return forbidden();
+      throw forbidden();
+    }
+    const { nickname } = updateNicknameDto;
+
+    const existedUser = await this.getUserByNickname(nickname);
+    if (existedUser && existedUser.id !== id) {
+      throw conflict();
     }
 
     try {
@@ -129,7 +155,7 @@ export class UsersService {
         },
       });
       if (!updatedUser) {
-        return notFound();
+        throw notFound();
       }
 
       return {
@@ -137,7 +163,7 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error({ error });
-      return internalServerError();
+      throw internalServerError();
     }
   }
 
