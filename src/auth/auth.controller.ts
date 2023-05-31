@@ -24,6 +24,7 @@ import {
   ApiBadRequestResponse,
   ApiParam,
 } from '@nestjs/swagger';
+import { AccessTokenGuard } from './guards';
 import { ResponseSuccessDto } from 'src/common/dto/response-success.dto';
 import { RESPONSE_MESSAGE } from 'src/common/objects';
 import { wrapSuccess } from 'src/utils/success';
@@ -135,10 +136,12 @@ export class AuthController {
   }
 
   @Delete(':id')
+  @UseGuards(AccessTokenGuard)
   @ApiOperation({
     summary: '회원 탈퇴 API',
     description: '회원 탈퇴',
   })
+  @ApiBearerAuth('accessToken')
   @ApiParam({
     type: Number,
     name: 'id',
@@ -150,6 +153,7 @@ export class AuthController {
     @Req() req,
     @Param() { id }: DeleteUserParams,
   ): Promise<ResponseSuccessDto> {
+    console.log(req.user?.id);
     await this.authService.deleteUserByUserId(req.user?.id, id);
     return wrapSuccess(
       HttpStatus.NO_CONTENT,
