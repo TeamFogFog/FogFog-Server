@@ -413,6 +413,8 @@ export class AuthService {
           this.logger.error({ error });
           return internalServerError();
         }
+
+        break;
       case 'apple':
         const appleRevokeUrl = 'https://appleid.apple.com/auth/revoke';
         const clientSecret = (await this.getAppleClientSecret()) as string;
