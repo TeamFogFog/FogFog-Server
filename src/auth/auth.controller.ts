@@ -153,7 +153,6 @@ export class AuthController {
     @Req() req,
     @Param() { id }: DeleteUserParams,
   ): Promise<ResponseSuccessDto> {
-    console.log(req.user?.id);
     await this.authService.deleteUserByUserId(req.user?.id, id);
     return wrapSuccess(
       HttpStatus.NO_CONTENT,
