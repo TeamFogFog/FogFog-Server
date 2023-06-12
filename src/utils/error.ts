@@ -30,3 +30,7 @@ export const forbidden = () => {
 export const notFound = () => {
   return new CustomException(HttpStatus.NOT_FOUND, RESPONSE_MESSAGE.NOT_FOUND);
 };
+
+export const conflict = () => {
+  return new CustomException(HttpStatus.CONFLICT, RESPONSE_MESSAGE.DUPLICATED);
+};
