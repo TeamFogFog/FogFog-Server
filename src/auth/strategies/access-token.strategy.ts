@@ -17,7 +17,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<JwtPayload | CustomException> {
+  async validate(payload: JwtPayload): Promise<JwtPayload> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: payload.id,
@@ -26,7 +26,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
 
     if (!user) {
-      return notFound();
+      throw notFound();
     }
 
     return {

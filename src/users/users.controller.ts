@@ -65,10 +65,7 @@ export class UsersController {
     @Param() { id }: ReadNicknameParams,
   ): Promise<ResponseNicknameDto> {
     const data: ResponseNicknameData =
-      (await this.usersService.getNicknameByUserId(
-        req.user?.id,
-        id,
-      )) as ResponseNicknameData;
+      await this.usersService.getNicknameByUserId(req.user?.id, id);
 
     return wrapSuccess(
       HttpStatus.OK,
@@ -131,6 +128,7 @@ export class UsersController {
       id,
       updatePreferredMapDto,
     );
+
     return wrapSuccess(
       HttpStatus.OK,
       RESPONSE_MESSAGE.UPDATE_PREFERRED_MAP_SUCCESS,
