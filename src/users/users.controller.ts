@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiForbiddenResponse,
@@ -42,6 +43,7 @@ import { UsersService } from './users.service';
 @ApiTags('Users')
 @ApiBearerAuth('accessToken')
 @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+@ApiBadRequestResponse({ description: 'Bad Request' })
 @ApiForbiddenResponse({
   description: 'Forbidden - 요청 id 와 accessToken 정보가 매치되지 않는 경우',
 })
