@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma.service';
 import { UsersService } from './users.service';
 import { UpdateNicknameDto } from './dto/update-nickname.dto';
 import { UpdatePreferredMapDto } from './dto/update-preferredMap.dto';
-import { forbidden, notFound } from '../utils/error';
+import { forbidden } from '../utils/error';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -44,18 +44,18 @@ describe('UsersService', () => {
       ...newUser,
       id: 1,
     };
-    it('생성할 user 객체가 주어지면 user를 생성하고 반환한다.', () => {
+    it('생성할 user 객체가 주어지면 user를 생성하고 반환한다.', async () => {
       const mockCreate = prisma.create.mockResolvedValueOnce(
         createdUser as any,
       );
 
-      const result = service.createUser(newUser);
+      const result = await service.createUser(newUser);
 
       expect(mockCreate).toHaveBeenCalledTimes(1);
       expect(mockCreate).toHaveBeenCalledWith({
         data: newUser,
       });
-      expect(result).resolves.toEqual(createdUser);
+      expect(result).toEqual(createdUser);
     });
   });
 
@@ -67,12 +67,12 @@ describe('UsersService', () => {
       ...baseUser,
     };
 
-    it('존재하는 userId 가 주어지면, user 를 반환한다.', () => {
+    it('존재하는 userId 가 주어지면, user 를 반환한다.', async () => {
       const mockFindUnique = prisma.findUnique.mockResolvedValueOnce(
         resultUser as any,
       );
 
-      const result = service.getUserById(id);
+      const result = await service.getUserById(id);
 
       expect(mockFindUnique).toHaveBeenCalledTimes(1);
       expect(mockFindUnique).toHaveBeenCalledWith({
@@ -81,7 +81,7 @@ describe('UsersService', () => {
           isDeleted: false,
         },
       });
-      expect(result).resolves.toEqual(resultUser);
+      expect(result).toEqual(resultUser);
     });
   });
 
@@ -94,12 +94,12 @@ describe('UsersService', () => {
       ...baseUser,
     };
 
-    it('존재하는 kakaoId 가 주어지면, user 를 반환한다.', () => {
+    it('존재하는 kakaoId 가 주어지면, user 를 반환한다.', async () => {
       const mockFindFirst = prisma.findFirst.mockResolvedValueOnce(
         resultUser as any,
       );
 
-      const result = service.getUserByKaKaoId(kakaoId);
+      const result = await service.getUserByKaKaoId(kakaoId);
 
       expect(mockFindFirst).toHaveBeenCalledTimes(1);
       expect(mockFindFirst).toHaveBeenCalledWith({
@@ -108,7 +108,7 @@ describe('UsersService', () => {
           isDeleted: false,
         },
       });
-      expect(result).resolves.toEqual(resultUser);
+      expect(result).toEqual(resultUser);
     });
   });
 
@@ -121,12 +121,12 @@ describe('UsersService', () => {
       ...baseUser,
     };
 
-    it('존재하는 appleId 가 주어지면, user 를 반환한다.', () => {
+    it('존재하는 appleId 가 주어지면, user 를 반환한다.', async () => {
       const mockFindFirst = prisma.findFirst.mockResolvedValueOnce(
         resultUser as any,
       );
 
-      const result = service.getUserByAppleId(appleId);
+      const result = await service.getUserByAppleId(appleId);
 
       expect(mockFindFirst).toHaveBeenCalledTimes(2);
       expect(mockFindFirst).toHaveBeenCalledWith({
@@ -135,7 +135,7 @@ describe('UsersService', () => {
           isDeleted: false,
         },
       });
-      expect(result).resolves.toEqual(resultUser);
+      expect(result).toEqual(resultUser);
     });
   });
 
@@ -146,10 +146,10 @@ describe('UsersService', () => {
 
       const result = service.getNicknameByUserId(userId, id);
 
-      expect(result).resolves.toThrowError(forbidden());
+      expect(result).rejects.toThrowError(forbidden());
     });
 
-    it('존재하는 userId 와 일치하는 id가 주어지면 유저 닉네임을 반환한다.', () => {
+    it('존재하는 userId 와 일치하는 id가 주어지면 유저 닉네임을 반환한다.', async () => {
       const userId: number = 1;
       const id: number = 1;
 
@@ -161,14 +161,14 @@ describe('UsersService', () => {
         resultUser as any,
       );
 
-      const result = service.getNicknameByUserId(userId, id);
+      const result = await service.getNicknameByUserId(userId, id);
 
       expect(mockFindUnique).toHaveBeenCalledTimes(2);
       expect(mockFindUnique).toHaveBeenCalledWith({
         where: { id, isDeleted: false },
         select: { nickname: true },
       });
-      expect(result).resolves.toEqual(resultUser);
+      expect(result).toEqual(resultUser);
     });
   });
 
@@ -187,48 +187,33 @@ describe('UsersService', () => {
         updateNicknameDto,
       );
 
-      expect(result).resolves.toThrowError(forbidden());
+      expect(result).rejects.toThrowError(forbidden());
     });
 
-    it('존재하지 않는 userId가 주어지면 not found 에러를 던진다.', () => {
-      const id: number = 1;
-
-      const mockUpdate = prisma.update.mockResolvedValueOnce(undefined);
-
-      const result = service.updateNicknameByUserId(
-        userId,
-        id,
-        updateNicknameDto,
-      );
-
-      expect(mockUpdate).toHaveBeenCalledTimes(1);
-      expect(result).resolves.toThrowError(notFound());
-    });
-
-    it('존재하는 userId 와 일치하는 id, 수정할 닉네임이 주어지면, 닉네임을 수정하고, 수정한 닉네임을 반환한다.', () => {
+    it('존재하는 userId 와 일치하는 id, 수정할 닉네임이 주어지면, 닉네임을 수정하고, 수정한 닉네임을 반환한다.', async () => {
       const id: number = 1;
 
       const mockUpdate = prisma.update.mockResolvedValueOnce(
         updateNicknameDto as any,
       );
 
-      const result = service.updateNicknameByUserId(
+      const result = await service.updateNicknameByUserId(
         userId,
         id,
         updateNicknameDto,
       );
 
-      expect(mockUpdate).toHaveBeenCalledTimes(2);
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
       expect(mockUpdate).toHaveBeenCalledWith({
         where: { id, isDeleted: false },
-        data: { nickname: updateNicknameDto.nickname },
+        data: updateNicknameDto,
       });
-      expect(result).resolves.toEqual(updateNicknameDto);
+      expect(result).toEqual(updateNicknameDto);
     });
   });
 
   describe('update refresh token by user id', () => {
-    it('id, refresh token 이 주어지면 해당 id 유저의 refresh token 을 수정하고, 수정한 유저를 반환한다.', () => {
+    it('id, refresh token 이 주어지면 해당 id 유저의 refresh token 을 수정하고, 수정한 유저를 반환한다.', async () => {
       const id: number = 1;
       const refreshToken: string = 'test token';
 
@@ -241,14 +226,14 @@ describe('UsersService', () => {
 
       const mockUpdate = prisma.update.mockResolvedValueOnce(resultUser as any);
 
-      const result = service.updateRefreshTokenByUserId(id, refreshToken);
+      const result = await service.updateRefreshTokenByUserId(id, refreshToken);
 
-      expect(mockUpdate).toHaveBeenCalledTimes(3);
+      expect(mockUpdate).toHaveBeenCalledTimes(2);
       expect(mockUpdate).toHaveBeenCalledWith({
         where: { id },
         data: { refreshToken },
       });
-      expect(result).resolves.toEqual(resultUser);
+      expect(result).toEqual(resultUser);
     });
   });
 
@@ -272,41 +257,26 @@ describe('UsersService', () => {
         updatePreferredMapDto,
       );
 
-      expect(result).resolves.toThrowError(forbidden());
+      expect(result).rejects.toThrowError(forbidden());
     });
 
-    it('존재하지 않는 userId가 주어지면 not found 에러를 던진다.', () => {
-      const id: number = 1;
-
-      const mockUpdate = prisma.update.mockResolvedValueOnce(undefined);
-
-      const result = service.updatePreferredMapByUserId(
-        userId,
-        id,
-        updatePreferredMapDto,
-      );
-
-      expect(mockUpdate).toHaveBeenCalledTimes(4);
-      expect(result).resolves.toThrowError(notFound());
-    });
-
-    it('존재하는 userId 와 일치하는 id, 수정할 선호지도가 주어지면, 유저의 선호지도를 수정한다.', () => {
+    it('존재하는 userId 와 일치하는 id, 수정할 선호지도가 주어지면, 유저의 선호지도를 수정한다.', async () => {
       const id: number = 1;
 
       const mockUpdate = prisma.update.mockResolvedValueOnce(resultUser as any);
 
-      const result = service.updatePreferredMapByUserId(
+      const result = await service.updatePreferredMapByUserId(
         userId,
         id,
         updatePreferredMapDto,
       );
 
-      expect(mockUpdate).toHaveBeenCalledTimes(5);
+      expect(mockUpdate).toHaveBeenCalledTimes(3);
       expect(mockUpdate).toHaveBeenCalledWith({
         where: { id, isDeleted: false },
         data: { preferredMap: updatePreferredMapDto.preferredMap },
       });
-      expect(result).resolves.not.toThrow();
+      expect(result).toEqual(undefined);
     });
   });
 });

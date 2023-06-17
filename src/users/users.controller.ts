@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiForbiddenResponse,
@@ -42,6 +43,7 @@ import { UsersService } from './users.service';
 @ApiTags('Users')
 @ApiBearerAuth('accessToken')
 @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+@ApiBadRequestResponse({ description: 'Bad Request' })
 @ApiForbiddenResponse({
   description: 'Forbidden - 요청 id 와 accessToken 정보가 매치되지 않는 경우',
 })
@@ -65,10 +67,7 @@ export class UsersController {
     @Param() { id }: ReadNicknameParams,
   ): Promise<ResponseNicknameDto> {
     const data: ResponseNicknameData =
-      (await this.usersService.getNicknameByUserId(
-        req.user?.id,
-        id,
-      )) as ResponseNicknameData;
+      await this.usersService.getNicknameByUserId(req.user?.id, id);
 
     return wrapSuccess(
       HttpStatus.OK,
@@ -131,6 +130,7 @@ export class UsersController {
       id,
       updatePreferredMapDto,
     );
+
     return wrapSuccess(
       HttpStatus.OK,
       RESPONSE_MESSAGE.UPDATE_PREFERRED_MAP_SUCCESS,

@@ -4,7 +4,6 @@ import {
   Get,
   HttpStatus,
   Post,
-  Patch,
   Query,
   Req,
   UseGuards,
@@ -23,6 +22,7 @@ import {
   ApiBearerAuth,
   ApiBadRequestResponse,
   ApiParam,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { AccessTokenGuard } from './guards';
 import { ResponseSuccessDto } from 'src/common/dto/response-success.dto';
@@ -91,14 +91,10 @@ export class AuthController {
 
     switch (socialType) {
       case 'kakao':
-        data = (await this.authService.createKakaoUser(
-          signinDto,
-        )) as ResponseSigninData;
+        data = await this.authService.createKakaoUser(signinDto);
         break;
       case 'apple':
-        data = (await this.authService.createAppleUser(
-          signinDto,
-        )) as ResponseSigninData;
+        data = await this.authService.createAppleUser(signinDto);
     }
 
     return wrapSuccess(
@@ -123,10 +119,10 @@ export class AuthController {
   async updateToken(@Req() req): Promise<ResponseTokenDto> {
     const { id, refreshToken } = req.user;
 
-    const data: ResponseTokenData = (await this.authService.updateToken(
+    const data: ResponseTokenData = await this.authService.updateToken(
       id,
       refreshToken,
-    )) as ResponseTokenData;
+    );
 
     return wrapSuccess(
       HttpStatus.OK,
@@ -148,7 +144,14 @@ export class AuthController {
     required: true,
     description: 'user id',
   })
-  @ApiOkResponse({ type: ResponseSuccessDto })
+  @ApiNoContentResponse({ description: 'No Content' })
+  @ApiForbiddenResponse({
+    description:
+      'Forbidden - 해당 유저의 요청 id와 accessToken이 매치되지 않은 경우',
+  })
+  @ApiNotFoundResponse({
+    description: 'Not Found - 해당 id의 유저가 존재하지 않는 경우',
+  })
   async deleteUser(
     @Req() req,
     @Param() { id }: DeleteUserParams,

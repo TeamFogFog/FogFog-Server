@@ -65,10 +65,7 @@ export class MapsController {
     @Query() { lat, long }: ReadSmokingAreasQuery,
   ): Promise<ResponseSmokingAreasDto> {
     const data: ResponseSmokingAreasData =
-      (await this.mapService.getMapsByLatAndLong(
-        lat,
-        long,
-      )) as ResponseSmokingAreasData;
+      await this.mapService.getMapsByLatAndLong(lat, long);
 
     return wrapSuccess(
       HttpStatus.OK,
@@ -112,11 +109,12 @@ export class MapsController {
     @Param() { id }: ReadSmokingAreaParam,
     @Query() { lat, long }: ReadSmokingAreaQuery,
   ): Promise<ResponseSmokingAreaDto> {
-    const data: ResponseSmokingAreaData = (await this.mapService.getMapById(
+    const data: ResponseSmokingAreaData = await this.mapService.getMapById(
       id,
       lat,
       long,
-    )) as ResponseSmokingAreaData;
+    );
+
     return wrapSuccess(
       HttpStatus.OK,
       RESPONSE_MESSAGE.READ_SMOKING_AREA_SUCCESS,

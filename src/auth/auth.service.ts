@@ -1,5 +1,5 @@
-import { Head, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { firstValueFrom, catchError, ObservableInput } from 'rxjs';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { firstValueFrom, catchError } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -25,7 +25,7 @@ import {
 import * as jwt from 'jsonwebtoken';
 import JwksRsa, { JwksClient } from 'jwks-rsa';
 import * as fs from 'fs';
-import { join, resolve } from 'path';
+import { resolve } from 'path';
 import * as qs from 'qs';
 import {
   forbidden,
@@ -79,36 +79,31 @@ export class AuthService {
   async updateToken(
     id: number,
     hashedRefreshToken: string,
-  ): Promise<ResponseTokenData | CustomException> {
-    try {
-      const user = <User>await this.usersService.getUserById(id);
-      if (!user || !user.refreshToken) {
-        return forbidden();
-      }
-
-      const isRefreshTokenMatch: boolean = await argon2.verify(
-        user.refreshToken,
-        hashedRefreshToken,
-      );
-      if (!isRefreshTokenMatch) {
-        return forbidden();
-      }
-
-      const newTokens = await this.getJwtToken(user);
-      const newHashedRefreshToken = await this.getHashedRefreshToken(
-        newTokens.refreshToken,
-      );
-
-      await this.usersService.updateRefreshTokenByUserId(
-        user.id,
-        newHashedRefreshToken,
-      );
-
-      return newTokens;
-    } catch (error) {
-      this.logger.error({ error });
-      return internalServerError();
+  ): Promise<ResponseTokenData> {
+    const user = await this.usersService.getUserById(id);
+    if (!user || !user.refreshToken) {
+      throw forbidden();
     }
+
+    const isRefreshTokenMatch: boolean = await argon2.verify(
+      user.refreshToken,
+      hashedRefreshToken,
+    );
+    if (!isRefreshTokenMatch) {
+      throw forbidden();
+    }
+
+    const newTokens = await this.getJwtToken(user);
+    const newHashedRefreshToken = await this.getHashedRefreshToken(
+      newTokens.refreshToken,
+    );
+
+    await this.usersService.updateRefreshTokenByUserId(
+      user.id,
+      newHashedRefreshToken,
+    );
+
+    return newTokens;
   }
 
   async getKakaoAccessToken(
@@ -120,26 +115,19 @@ export class AuthService {
 	&redirect_url=${this.config.get('kakaoRedirectUrl')}
 	&code=${code}`;
 
-    try {
-      const tokenResponse = await firstValueFrom(
-        this.http.post(kakaoRequestTokenUrl),
-      );
-      const accessToken: string = tokenResponse.data.access_token;
+    const tokenResponse = await firstValueFrom(
+      this.http.post(kakaoRequestTokenUrl),
+    );
+    const accessToken: string = tokenResponse.data.access_token;
 
-      return { accessToken };
-    } catch (error) {
-      this.logger.error({ error });
-      return internalServerError();
-    }
+    return { accessToken };
   }
 
-  async createKakaoUser(
-    signinDto: SigninDto,
-  ): Promise<ResponseSigninData | CustomException> {
+  async createKakaoUser(signinDto: SigninDto): Promise<ResponseSigninData> {
     const { kakaoAccessToken, socialType }: SigninDto = signinDto;
 
     if (!kakaoAccessToken) {
-      return unauthorized();
+      throw unauthorized();
     }
 
     const requestHeader = {
@@ -149,74 +137,60 @@ export class AuthService {
 
     const kakaoRequestUserUrl = `https://kapi.kakao.com/v2/user/me`;
 
-    try {
-      const userResponse = await firstValueFrom(
-        this.http.get(kakaoRequestUserUrl, {
-          headers: requestHeader,
-        }),
-      );
-      if (!userResponse) {
-        return notFound();
-      }
-
-      const { id } = userResponse.data;
-      const { profile, email, age_range, has_gender, gender } =
-        userResponse.data?.kakao_account;
-
-      let user = <User>await this.usersService.getUserByKaKaoId(id);
-
-      if (!user) {
-        let convertGenderType: number | undefined;
-
-        let convertSocialType: number = convertObjectKey(
-          SOCIAL_TYPE,
-          socialType,
-        );
-
-        if (has_gender) {
-          convertGenderType = convertObjectKey(GENDER_TYPE, gender);
-        }
-
-        const newUser = {
-          name: profile.nickname,
-          nickname: profile.nickname,
-          socialType: convertSocialType,
-          kakaoId: id,
-          email: email ?? undefined,
-          age: age_range ?? undefined,
-          sex: convertGenderType,
-        };
-
-        user = <User>await this.usersService.createUser(newUser);
-      }
-
-      const tokens: JwtToken = await this.getJwtToken(user);
-      const hashedRefreshToken: string = await this.getHashedRefreshToken(
-        tokens.refreshToken,
-      );
-
-      await this.usersService.updateRefreshTokenByUserId(
-        user.id,
-        hashedRefreshToken,
-      );
-
-      return {
-        ...tokens,
-        id: user.id,
-      };
-    } catch (error) {
-      this.logger.error({ error });
-      if (error instanceof AxiosError) {
-        throw new CustomException(
-          error.response.status,
-          error.response.data.msg,
-        );
-      }
-      return internalServerError();
+    const userResponse = await firstValueFrom(
+      this.http.get(kakaoRequestUserUrl, {
+        headers: requestHeader,
+      }),
+    );
+    if (!userResponse) {
+      throw notFound();
     }
+
+    const { id } = userResponse.data;
+    const { profile, email, age_range, has_gender, gender } =
+      userResponse.data?.kakao_account;
+
+    let user = await this.usersService.getUserByKaKaoId(id);
+
+    if (!user) {
+      let convertGenderType: number | undefined;
+
+      let convertSocialType: number = convertObjectKey(SOCIAL_TYPE, socialType);
+
+      if (has_gender) {
+        convertGenderType = convertObjectKey(GENDER_TYPE, gender);
+      }
+
+      const newUser = {
+        name: profile.nickname,
+        nickname: profile.nickname,
+        socialType: convertSocialType,
+        kakaoId: id,
+        email: email ?? undefined,
+        age: age_range ?? undefined,
+        sex: convertGenderType,
+      };
+
+      user = await this.usersService.createUser(newUser);
+    }
+
+    const tokens: JwtToken = await this.getJwtToken(user);
+    const hashedRefreshToken: string = await this.getHashedRefreshToken(
+      tokens.refreshToken,
+    );
+
+    await this.usersService.updateRefreshTokenByUserId(
+      user.id,
+      hashedRefreshToken,
+    );
+
+    return {
+      ...tokens,
+      id: user.id,
+    };
   }
 
-  async getAppleClientSecret(): Promise<string | CustomException> {
+  async getAppleClientSecret(): Promise<string> {
     const header = {
       kid: this.config.get<string>('appleKeyId'),
       alg: 'ES256',
@@ -236,47 +210,37 @@ export class AuthService {
       )
       .toString();
 
-    try {
-      const clientSecret = jwt.sign(payload, privateKey, {
-        header,
-      });
-      return clientSecret;
-    } catch (error) {
-      this.logger.error(error);
-      return internalServerError();
-    }
+    const clientSecret = jwt.sign(payload, privateKey, {
+      header,
+    });
+    return clientSecret;
   }
 
-  async getAppleRefreshToken(code: string): Promise<string | CustomException> {
-    try {
-      const clientSecret = (await this.getAppleClientSecret()) as string;
+  async getAppleRefreshToken(code: string): Promise<string> {
+    const clientSecret = (await this.getAppleClientSecret()) as string;
 
-      const data: RequestTokenPayload = {
-        client_id: this.config.get<string>('appleClientId'),
-        client_secret: clientSecret,
-        grant_type: 'authorization_code',
-        code,
-      };
+    const data: RequestTokenPayload = {
+      client_id: this.config.get<string>('appleClientId'),
+      client_secret: clientSecret,
+      grant_type: 'authorization_code',
+      code,
+    };
 
-      const response = await firstValueFrom(
-        this.http
-          .post('https://appleid.apple.com/auth/token', qs.stringify(data))
-          .pipe(
-            catchError((error: AxiosError) => {
-              this.logger.error(error.response.data);
-              throw new CustomException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-              );
-            }),
-          ),
-      );
+    const response = await firstValueFrom(
+      this.http
+        .post('https://appleid.apple.com/auth/token', qs.stringify(data))
+        .pipe(
+          catchError((error: AxiosError) => {
+            this.logger.error(error.response.data);
+            throw new CustomException(
+              HttpStatus.INTERNAL_SERVER_ERROR,
+              RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+            );
+          }),
+        ),
+    );
 
-      return response.data.refresh_token as string;
-    } catch (error) {
-      this.logger.error(error);
-      return internalServerError();
-    }
+    return response.data.refresh_token as string;
   }
 
   async verifyAppleIdToken(idToken: string): Promise<AppleJwtTokenPayload> {
@@ -305,9 +269,7 @@ export class AuthService {
     return verifiedDecodedToken;
   }
 
-  async createAppleUser(
-    signinDto: SigninDto,
-  ): Promise<ResponseSigninData | CustomException> {
+  async createAppleUser(signinDto: SigninDto): Promise<ResponseSigninData> {
     try {
       const verifiedToken: AppleJwtTokenPayload = await this.verifyAppleIdToken(
         signinDto.idToken,
@@ -315,7 +277,7 @@ export class AuthService {
 
       const { sub, email } = verifiedToken;
 
-      let user = <User>await this.usersService.getUserByAppleId(sub);
+      let user = await this.usersService.getUserByAppleId(sub);
       if (!user) {
         const refreshToken = await this.getAppleRefreshToken(signinDto.code);
 
@@ -331,10 +293,10 @@ export class AuthService {
           appleRefreshToken: refreshToken,
         };
 
-        user = <User>await this.usersService.createUser(newUser);
+        user = await this.usersService.createUser(newUser);
       }
 
-      const tokens: JwtToken = <JwtToken>await this.getJwtToken(user);
+      const tokens: JwtToken = await this.getJwtToken(user);
       const hashedRefreshToken: string = await this.getHashedRefreshToken(
         tokens.refreshToken,
       );
@@ -353,21 +315,18 @@ export class AuthService {
       if (error instanceof jwt.JsonWebTokenError) {
         throw new CustomException(HttpStatus.UNAUTHORIZED, error.message);
       }
-      return internalServerError();
+      throw internalServerError();
     }
   }
 
-  async deleteUserByUserId(
-    userId: number,
-    id: number,
-  ): Promise<void | CustomException> {
+  async deleteUserByUserId(userId: number, id: number): Promise<void> {
     if (userId !== id) {
-      return forbidden();
+      throw forbidden();
     }
 
-    const user = (await this.usersService.getUserById(id)) as User;
+    const user = await this.usersService.getUserById(id);
     if (!user) {
-      return notFound();
+      throw notFound();
     }
 
     switch (SOCIAL_TYPE[user.socialType]) {
@@ -388,31 +347,26 @@ export class AuthService {
           params: kakaoRequestParams,
         };
 
-        try {
-          const unlinkResponse = await firstValueFrom(
-            this.http.post(kakaoUnlinkUrl, null, kakaoRequestConfig).pipe(
-              catchError((error: AxiosError) => {
-                this.logger.error(error.response.data);
-                throw new CustomException(
-                  HttpStatus.INTERNAL_SERVER_ERROR,
-                  RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
-                );
-              }),
-            ),
-          );
-          const unlinkedkakaoId = unlinkResponse.data.id;
-          await this.prisma.user.update({
-            where: { id, kakaoId: unlinkedkakaoId },
-            data: {
-              isDeleted: true,
-              refreshToken: null,
-              kakaoId: null,
-            },
-          });
-        } catch (error) {
-          this.logger.error({ error });
-          return internalServerError();
-        }
+        const unlinkResponse = await firstValueFrom(
+          this.http.post(kakaoUnlinkUrl, null, kakaoRequestConfig).pipe(
+            catchError((error: AxiosError) => {
+              this.logger.error(error.response.data);
+              throw new CustomException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+              );
+            }),
+          ),
+        );
+        const unlinkedkakaoId = unlinkResponse.data.id;
+        await this.prisma.user.update({
+          where: { id, kakaoId: unlinkedkakaoId },
+          data: {
+            isDeleted: true,
+            refreshToken: null,
+            kakaoId: null,
+          },
+        });
         break;
       case 'apple':
         const appleRevokeUrl = 'https://appleid.apple.com/auth/revoke';
@@ -425,32 +379,27 @@ export class AuthService {
           token_type_hint: 'refresh_token',
         };
 
-        try {
-          await firstValueFrom(
-            this.http.post(appleRevokeUrl, qs.stringify(data)).pipe(
-              catchError((error: AxiosError) => {
-                this.logger.error(error.response.data);
-                throw new CustomException(
-                  HttpStatus.INTERNAL_SERVER_ERROR,
-                  RESPONSE_MESSAGE.internalServerError,
-                );
-              }),
-            ),
-          );
+        await firstValueFrom(
+          this.http.post(appleRevokeUrl, qs.stringify(data)).pipe(
+            catchError((error: AxiosError) => {
+              this.logger.error(error.response.data);
+              throw new CustomException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                RESPONSE_MESSAGE.INTERNAL_SERVER_ERROR,
+              );
+            }),
+          ),
+        );
 
-          await this.prisma.user.update({
-            where: { id },
-            data: {
-              isDeleted: true,
-              refreshToken: null,
-              appleId: null,
-              appleRefreshToken: null,
-            },
-          });
-        } catch (error) {
-          this.logger.error({ error });
-          return internalServerError();
-        }
+        await this.prisma.user.update({
+          where: { id },
+          data: {
+            isDeleted: true,
+            refreshToken: null,
+            appleId: null,
+            appleRefreshToken: null,
+          },
+        });
     }
   }
 }
