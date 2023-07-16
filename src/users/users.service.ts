@@ -10,8 +10,6 @@ import { UpdatePreferredMapDto } from './dto/update-preferredMap.dto';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  private readonly logger = new Logger(UsersService.name);
-
   async createUser(newUser): Promise<User> {
     const user = await this.prisma.user.create({ data: newUser });
     return user;

@@ -18,8 +18,6 @@ export class MapsService {
     private readonly config: ConfigService,
   ) {}
 
-  private readonly logger = new Logger(MapsService.name);
-
   async getMapsByLatAndLong(
     lat: number,
     long: number,
