@@ -22,8 +22,11 @@ export class MapsService {
     lat: number,
     long: number,
   ): Promise<ResponseSmokingAreasData> {
+    const latitude = lat.toFixed(6);
+    const longitude = long.toFixed(6);
+
     const areas: ResponseSmokingAreas[] = await this.prisma
-      .$queryRaw`SELECT id, latitude, longitude FROM ( SELECT id, latitude, longitude, (6371 * acos(cos(radians( ${lat} ) ) * cos(radians(latitude)) * cos(radians(longitude) - radians(${long})) + sin(radians(${lat})) * sin( radians(latitude)))) AS distance FROM "Map" ) DATA WHERE DATA.distance < 2`;
+      .$queryRaw`SELECT id, latitude, longitude FROM ( SELECT id, latitude, longitude, (6371 * acos(cos(radians( ${latitude}::numeric ) ) * cos(radians(latitude)) * cos(radians(longitude) - radians(${longitude}::numeric)) + sin(radians(${latitude}::numeric)) * sin( radians(latitude)))) AS distance FROM "Map" ) DATA WHERE DATA.distance < 2`;
 
     const data: ResponseSmokingAreasData = {
       total: areas.length,
