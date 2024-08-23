@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["extendedWhereUnique"]
 }
 
@@ -12,31 +9,31 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  nickname     String?  @db.VarChar()
-  name         String?  @db.VarChar()
-  email        String?  @db.VarChar()
-  age          String?  @db.VarChar()
-  sex          Int?     @db.SmallInt()
-  preferredMap Int?     @map("preferred_map") @db.SmallInt
-  socialType   Int      @map("social_type") @db.SmallInt
-  refreshToken String?  @map("refresh_token") @db.VarChar()
-  kakaoId      BigInt?  @map("kakao_id") @db.BigInt()
-  appleId      String?  @map("apple_id") @db.VarChar()
-  appleRefreshToken String? @map("apple_refresh_token") @db.VarChar()
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  isDeleted    Boolean  @default(false) @map("is_deleted")
+  id                Int      @id @default(autoincrement())
+  createdAt         DateTime @default(now()) @map("created_at")
+  isDeleted         Boolean  @default(false) @map("is_deleted")
+  nickname          String?  @db.VarChar
+  preferredMap      Int?     @map("preferred_map") @db.SmallInt
+  refreshToken      String?  @map("refresh_token") @db.VarChar
+  socialType        Int      @map("social_type") @db.SmallInt
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  age               String?  @db.VarChar
+  email             String?  @db.VarChar
+  name              String?  @db.VarChar
+  sex               Int?     @db.SmallInt
+  appleId           String?  @map("apple_id") @db.VarChar
+  kakaoId           BigInt?  @map("kakao_id")
+  appleRefreshToken String?  @map("apple_refresh_token") @db.VarChar
 }
 
 model Map {
   id        Int      @id @default(autoincrement())
   latitude  Float
   longitude Float
-  address   String   @db.VarChar()
-  image     String?  @db.VarChar()
+  address   String   @db.VarChar
+  image     String?  @db.VarChar
   areaType  Int?     @map("area_type") @db.SmallInt
-  areaName  String   @map("area_name") @db.VarChar()
+  areaName  String   @map("area_name") @db.VarChar
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   isDeleted Boolean  @default(false) @map("is_deleted")

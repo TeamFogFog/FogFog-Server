@@ -11,6 +11,11 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  @Get('ping')
+  ping(): boolean {
+    return true;
+  }
+
   @UseGuards(AccessTokenGuard)
   @Get('test')
   async authenticationTest(@Req() req) {
