@@ -1,6 +1,5 @@
 FROM node:20-alpine AS base
 
-# node prune 설정
 RUN apk add curl bash && curl -sfL https://gobinaries.com/tj/node-prune | bash -s -- -b /usr/local/bin
 
 WORKDIR /usr/src/app
