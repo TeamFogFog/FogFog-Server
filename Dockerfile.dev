@@ -1,11 +1,12 @@
 FROM node:20-alpine AS base
 
-# node prune 설정
 RUN apk add curl bash && curl -sfL https://gobinaries.com/tj/node-prune | bash -s -- -b /usr/local/bin
 
 WORKDIR /usr/src/app
 
 COPY package.json ./
+COPY prisma ./
+COPY .env ./
 
 RUN ls -a && yarn
 
@@ -13,22 +14,23 @@ FROM base AS dev
 
 COPY . .
 
-RUN ls -a && yarn build
+RUN yarn build
 
 # run node prune - 사용하지 않는 모듈 제거
-RUN /usr/local/bin/node-prune
+# RUN /usr/local/bin/node-prune
 
 FROM node:20-alpine
 
 COPY --from=base /usr/src/app/package.json ./
+COPY --from=base /usr/src/app/.env ./
 COPY --from=dev /usr/src/app/dist/ ./dist/
 COPY --from=dev /usr/src/app/node_modules/ ./node_modules/
 
 # port 설정
-EXPOSE 3000
+EXPOSE 8081
 
 # 환경 변수 설정
 ENV NODE_ENV=development
 
 # start
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]
