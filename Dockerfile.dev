@@ -5,6 +5,7 @@ RUN apk add curl bash && curl -sfL https://gobinaries.com/tj/node-prune | bash -
 WORKDIR /usr/src/app
 
 COPY package.json ./
+COPY prisma ./
 
 RUN ls -a && yarn
 
@@ -12,7 +13,7 @@ FROM base AS dev
 
 COPY . .
 
-RUN ls -a && yarn build
+RUN yarn build
 
 # run node prune - 사용하지 않는 모듈 제거
 # RUN /usr/local/bin/node-prune
